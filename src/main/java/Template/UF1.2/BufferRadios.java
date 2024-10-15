@@ -1,12 +1,6 @@
 import java.util.LinkedList;
 import java.util.Queue;
 
-/**
- * -¿Qué es BufferRadios?
- * -¿Qué es un LinkedList? Es igual que un diccionario de Python?
- * -
- * */
-
 public class BufferRadios
 
 {

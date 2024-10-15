@@ -1,3 +1,45 @@
+
+### Métodos wait y notify
+
+-Cuando un hilo llama a wait() sobre un objeto, se libera el bloqueo (lock) 
+que tiene sobre ese objeto, permitiendo que otros hilos lo adquieran. 
+El hilo que llamó a wait() se detiene y queda en espera hasta que se le notifique que puede continuar.
+
+````java
+synchronized (obj) {
+    while (!condition) {
+        obj.wait();
+    }
+    // Código para ejecutar cuando condition es verdadera
+}
+````
+
+-Se llama a notify() después de realizar una acción que permite a otros hilos avanzar. 
+El hilo que ha sido despertado no continúa de inmediato;
+primero tiene que esperar hasta que pueda adquirir el bloqueo del objeto.
+
+````java
+synchronized (obj) {
+    while (!condition) {
+        obj.wait();  // El hilo se suspende hasta que condition sea verdadera
+    }
+    // Código a ejecutar cuando condition se cumple
+}
+
+synchronized (obj) {
+    // Cambiar el estado de condition
+    obj.notify();  // Despierta un hilo que está esperando en obj
+}
+````
+
+### Syncronized
+
+El wait y el notify no se pueden meter a pelo, necesitan un método con el decorador "Syncronized",
+que es lo que permite bloquear el proceso.
+
+Todo el código que esté dentro de un bloque Syncronized bloqueará lo que suceda dentro para que nadie
+más acceda al recurso hasta que se ejecute dicho bloqueo. Por lo general, se va a bloquear a sí mismo.
+
 # Actividad 1. Hilos y Sockets
 Fecha de entrega:  24 nov
 
@@ -11,6 +53,7 @@ la aplicación cliente consumirá dicha aplicación servidora.
 Los libros tendrán un ISBN, un título, un autor y un precio. 
 Se encontrarán alojados en el servidor. Dicho servidor cuando arranque tendrá 
 5 libros preestablecidos con todos los datos rellenos. 
+
 Los libros se guardarán en memoria en cualquier tipo de estructura de datos 
 (como puede ser un lista). 
 

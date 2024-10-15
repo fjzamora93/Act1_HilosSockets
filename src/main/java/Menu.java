@@ -13,12 +13,11 @@ public class Menu {
         do {
             // Mostrar el menú de opciones
             System.out.println("Menú de opciones:");
-            System.out.println("1. Añadir nuevo coche");
-            System.out.println("2. Borrar coche por id");
-            System.out.println("3. Consulta coche por id");
-            System.out.println("4. Listado de coches");
-            System.out.println("5. Convertir a CSV");
-            System.out.println("6. Terminar el programa");
+            System.out.println("1. Añadir nuevo libro");
+            System.out.println("2. Borrar libro por id");
+            System.out.println("3. Consulta libro por id");
+            System.out.println("4. Listado de libros");
+            System.out.println("5. Terminar el programa");
             System.out.print("Seleccione una opción: ");
 
             // Leer la opción seleccionada por el usuario
@@ -28,30 +27,24 @@ public class Menu {
             switch (opcion) {
                 case 1:
                     System.out.println("Inserte la matrícula");
-                    concesionario.addNew(scanner.next());
                     Thread.sleep(2000);
                     break;
                 case 2:
                     System.out.println("Inserte el Id a borrar");
-                    concesionario.deleteById(scanner.nextInt());
                     Thread.sleep(2000);
                     break;
                 case 3:
                     System.out.println("Inserte el Id a buscar");
-                    concesionario.findById(scanner.nextInt());
                     Thread.sleep(4000);
                     break;
                 case 4:
-                    concesionario.findAll();
+                    System.out.println("Listado de todos los libros");
                     Thread.sleep(4000);
                     break;
+
                 case 5:
-                    concesionario.toCsv();
-                    Thread.sleep(2000);
-                    break;
-                case 6:
                     System.out.println("Se ha seleccionado la opción: Terminar el programa");
-                    concesionario.overWriteFile();
+
                     Thread.sleep(2000);
                     break;
                 default:
