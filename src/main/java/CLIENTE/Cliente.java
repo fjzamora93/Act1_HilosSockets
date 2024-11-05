@@ -29,6 +29,7 @@ public class Cliente {
             InputStream entrada = cliente.getInputStream();
             OutputStream salida = cliente.getOutputStream();
             String texto = "";
+            String textInput = "";
 
             while (!texto.trim().equals("5")) {
 
@@ -45,7 +46,30 @@ public class Cliente {
                 texto = scanner.nextLine();
 
 
-                salida.write(texto.getBytes());
+                switch (texto) {
+                    case "1":
+                        System.out.println("Introduce el ISBN");
+                        textInput = scanner.nextLine();
+                        break;
+                    case "2":
+                        System.out.println("Introduce el título");
+                        textInput = scanner.nextLine();
+                        break;
+                    case "3":
+                        System.out.println("Introduce el autor");
+                        textInput = scanner.nextLine();
+                        break;
+                    case "4":
+                        System.out.println("Introduce Isbn, Título, Autor y precio separado con comas. \n Ejemplo: \n 1234, Don Quijote, Miguel de Cervantes, 40€  ");
+                        textInput = scanner.nextLine();
+                        break;
+                    default:
+                        System.out.println("Introduce una opción válida");
+                }
+
+                String outputClient = texto + "/" + textInput;
+
+                salida.write(outputClient.getBytes());
 
                 // Crear un buffer para el mensaje del servidor y leer la respuesta
                 byte[] mensaje = new byte[1000];

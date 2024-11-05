@@ -15,7 +15,7 @@ public class Libro {
     private String ISBN;
     private String title;
     private String author;
-    private double precio;
+    private String precio;
 
     @Override
     public boolean equals(Object o) {

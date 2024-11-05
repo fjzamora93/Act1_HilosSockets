@@ -9,11 +9,11 @@ public class LibroDAO {
 
     public LibroDAO() {
         this.listaLibros = new ArrayList<>();
-        this.listaLibros.add(new Libro("1A", "Harry Potter y la piedra filosofal", "J.K. Rowling", 15.99));
-        this.listaLibros.add(new Libro("2B", "Harry Potter y el cáliz de fuego", "J.K. Rowling", 18.50));
-        this.listaLibros.add(new Libro("3C", "El señor de los anillos: Las dos torres", "J.R.R. Tolkien", 22.99));
-        this.listaLibros.add(new Libro("4D", "El hobbit", "J.R.R. Tolkien", 14.25));
-        this.listaLibros.add(new Libro("5E", "La llamada de Cthulhu", "H.P. Lovecraft", 10.99));
+        this.listaLibros.add(new Libro("1A", "Harry Potter y la piedra filosofal", "J.K. Rowling", "15.99"));
+        this.listaLibros.add(new Libro("2B", "Harry Potter y el cáliz de fuego", "J.K. Rowling", "18.50"));
+        this.listaLibros.add(new Libro("3C", "El señor de los anillos: Las dos torres", "J.R.R. Tolkien", "22.99"));
+        this.listaLibros.add(new Libro("4D", "El hobbit", "J.R.R. Tolkien", "14.25"));
+        this.listaLibros.add(new Libro("5E", "La llamada de Cthulhu", "H.P. Lovecraft", "10.99"));
     }
 
 
@@ -48,8 +48,11 @@ public class LibroDAO {
     }
 
 
-    public synchronized String add() {
-        Libro nuevoLibro = new Libro("6D", "Harry Potter y la Cámara Secreta", "J.K. Rowling", 15.99);
+    public synchronized String add(String libroString) {
+        String[] libroToArray = libroString.split(",");
+
+
+        Libro nuevoLibro = new Libro(libroToArray[0], libroToArray[1], libroToArray[2], libroToArray[3]);
         try {
             /*Simulamos un retraso de 4 segundos.
             * Si el hilo está bien sincronizado, nunca podrán salir por consola
@@ -65,6 +68,9 @@ public class LibroDAO {
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // Restaura el estado de interrupción
+        } catch (Exception e){
+            System.out.println("Datos incompletos, introduce un formato de libro válido");
+            return "Datos incompletos, introduce un formato de libro válido";
         }
         return nuevoLibro.getTitle() + " añadido con éxito a la base de datos";
     }

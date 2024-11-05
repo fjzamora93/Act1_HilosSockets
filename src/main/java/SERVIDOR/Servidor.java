@@ -30,40 +30,45 @@ public class Servidor {
 
                 // Crear un nuevo hilo para manejar al cliente
                 new Thread(() -> {
-                    String research = "";
+
                     try {
                         InputStream entrada = enchufeAlCliente.getInputStream();
                         OutputStream salida = enchufeAlCliente.getOutputStream();
                         String inputClient = "";
+                        String method = "";
+                        String body = "";
+                        String outputServer = "";
 
                         while (!inputClient.trim().equals("5")) {
                             byte[] mensaje = new byte[1000];
-                            int bytesLeidos = entrada.read(mensaje); // Leer solo los bytes recibidos
-                            inputClient = new String(mensaje, 0, bytesLeidos).trim(); // Convertir solo los bytes leídos a String
-                            String outputServer = "";
+                            int bytesLeidos = entrada.read(mensaje);
+                            inputClient = new String(mensaje, 0, bytesLeidos).trim();
 
-                            if (inputClient.equals("5")) {
+                            String[] peticion = inputClient.split("/");
+                            System.out.println(peticion.toString());
+                            method = peticion[0];
+                            body = peticion[1];
+
+                            if (peticion[0].equals("5")) {
                                 salida.write("Hasta pronto, gracias por establecer conexión".getBytes());
                             } else {
-                                System.out.println("Cliente dice: " + inputClient);
+                                System.out.println("Cliente dice: " + peticion[0]);
                                 // Manejar las opciones seleccionadas
-                                switch (inputClient) {
+                                switch (peticion[0]) {
                                     case "1":
-                                        research = "1A";
-                                        outputServer = biblioteca.findByIsbn(research).toString();
+                                        outputServer = "Introduce el ISBN que quieres buscar";
+                                        outputServer = biblioteca.findByIsbn(peticion[1]).toString();
                                         break;
                                     case "2":
-                                        research = "Harry Potter";
-                                        outputServer =  biblioteca.findByTitle(research).toString();
+                                        outputServer =  biblioteca.findByTitle(peticion[1]).toString();
                                         break;
                                     case "3":
-                                        research = "Tolkien";
-                                        outputServer =   biblioteca.findByAuthor(research).toString();
+                                        outputServer =   biblioteca.findByAuthor(peticion[1]).toString();
                                         break;
                                     case "4":
 
                                         // Llamar al método synchronized para añadir libro
-                                        outputServer = biblioteca.add();
+                                        outputServer = biblioteca.add(peticion[1]);
                                         break;
                                     default:
                                         outputServer = "Opción no válida. Por favor, elija una opción del 1 al 5.";
