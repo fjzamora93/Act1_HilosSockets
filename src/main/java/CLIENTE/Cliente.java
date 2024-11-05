@@ -48,15 +48,14 @@ public class Cliente {
                 salida.write(texto.getBytes());
 
                 // Crear un buffer para el mensaje del servidor y leer la respuesta
-                byte[] mensaje = new byte[100];
+                byte[] mensaje = new byte[1000];
                 int bytesLeidos = entrada.read(mensaje); // Leer solo los bytes recibidos
                 texto = new String(mensaje, 0, bytesLeidos); // Convertir solo los bytes leídos a String
 
                 if (texto.trim().equals("FIN")) {
                     salida.write("Hasta pronto, gracias por establecer conexión".getBytes());
                 } else {
-                    System.out.println("Servidor dice: " + texto);
-                    Thread.sleep(4000);
+                    System.out.println("Servidor dice: \n" + texto);
 
                 }
             }

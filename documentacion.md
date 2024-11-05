@@ -22,7 +22,7 @@ Hay 2 formas de plantear el ejercicio: 2 maquinas virtuales una actua
 como cliente y otra como servidor o que el propio codigo 
 corra en una única máquina abriendo 2 pestañas de ejecución 
 independientes en intellij y en cada una de ellas correrá 
-de forma independiente el Servidor y el CLIENTE.Cliente.  
+de forma independiente el Servidor y el CLIENTE.main.java.Cliente.  
 
 Personalmente creo que esta es la forma mas sencilla, 
 pero estoy abierto a ambas propuestas.

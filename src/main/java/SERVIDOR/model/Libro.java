@@ -13,8 +13,8 @@ import java.util.Objects;
 @NoArgsConstructor
 public class Libro {
     private String ISBN;
-    private String titulo;
-    private String autor;
+    private String title;
+    private String author;
     private double precio;
 
     @Override
@@ -34,10 +34,10 @@ public class Libro {
     public String toString() {
         return "Libro{" +
                 "ISBN='" + ISBN + '\'' +
-                ", titulo='" + titulo + '\'' +
-                ", autor='" + autor + '\'' +
+                ", titulo='" + title + '\'' +
+                ", autor='" + author + '\'' +
                 ", precio=" + precio +
-                '}';
+                '}' + '\n';
     }
 
 
