@@ -1,13 +1,17 @@
 package SERVIDOR;
 
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+
+import SERVIDOR.model.Libro;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import SERVIDOR.dao.LibroDAO;
+import com.google.gson.JsonParser;
 
 public class Servidor {
     public static void main(String[] args) {
@@ -34,66 +38,84 @@ public class Servidor {
                     try {
                         InputStream entrada = enchufeAlCliente.getInputStream();
                         OutputStream salida = enchufeAlCliente.getOutputStream();
-                        String inputClient = "";
-                        String method = "";
-                        String body = "";
-                        String outputServer = "";
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(entrada));
+                        PrintWriter writer = new PrintWriter(new OutputStreamWriter(salida), true);
+                        String mensaje;
 
-                        while (!inputClient.trim().equals("5")) {
-                            byte[] mensaje = new byte[1000];
-                            int bytesLeidos = entrada.read(mensaje);
-                            inputClient = new String(mensaje, 0, bytesLeidos).trim();
 
-                            String[] peticion = inputClient.split("/");
-                            System.out.println(peticion.toString());
-                            method = peticion[0];
-                            body = peticion[1];
+                        while ((mensaje = reader.readLine()) != null) {
 
-                            if (peticion[0].equals("5")) {
-                                salida.write("Hasta pronto, gracias por establecer conexión".getBytes());
-                            } else {
-                                System.out.println("Cliente dice: " + peticion[0]);
-                                // Manejar las opciones seleccionadas
-                                switch (peticion[0]) {
-                                    case "1":
-                                        outputServer = "Introduce el ISBN que quieres buscar";
-                                        outputServer = biblioteca.findByIsbn(peticion[1]).toString();
-                                        break;
-                                    case "2":
-                                        outputServer =  biblioteca.findByTitle(peticion[1]).toString();
-                                        break;
-                                    case "3":
-                                        outputServer =   biblioteca.findByAuthor(peticion[1]).toString();
-                                        break;
-                                    case "4":
+                            // Convertir la cadena JSON recibida en un objeto JsonObject
+                            JsonObject jsonRequest = JsonParser.parseString(mensaje).getAsJsonObject();
 
-                                        // Llamar al método synchronized para añadir libro
-                                        outputServer = biblioteca.add(peticion[1]);
-                                        break;
-                                    default:
-                                        outputServer = "Opción no válida. Por favor, elija una opción del 1 al 5.";
-                                        break;
-                                }
+                            // Procesar el JSON en función del método solicitado
+                            String method = jsonRequest.get("method").getAsString();
+                            String body = jsonRequest.get("body").getAsString();
+                            String libroEncontrado;
+                            ArrayList <Libro> listadoEncontrado;
+                            JsonObject jsonResponse = new JsonObject();
 
-                                // El método getBytes convierte la salida a bytes para que se pueda recibir por el cliente.
-                                System.out.println("SALIDA DEL SERVIDOR: " + outputServer);
-                                salida.write((outputServer).getBytes());
-                                Thread.sleep(3000);
+                            System.out.println(method + "\n" + body);
+
+                            switch (method) {
+                                case "findByISBN":
+
+                                    if (biblioteca.findByIsbn(body) == null){
+                                        libroEncontrado = "Ningún libro se corresponde al ISBN indicado";
+                                        System.out.println(libroEncontrado);
+                                    } else {
+                                        libroEncontrado = biblioteca.findByIsbn(body).toString();
+                                    }
+                                    jsonResponse.addProperty("response", libroEncontrado);
+
+                                    break;
+                                case "findByTitle":
+
+                                    listadoEncontrado = biblioteca.findByTitle(body);
+                                    jsonResponse.addProperty("response", String.valueOf(listadoEncontrado));
+                                    break;
+                                case "findByAuthor":
+                                    listadoEncontrado = biblioteca.findByAuthor(body);
+                                    jsonResponse.addProperty("response", String.valueOf(listadoEncontrado));
+                                    break;
+                                case "add":
+                                    // Llamar al método synchronized para añadir libro
+                                    String result;
+                                    try{
+                                        result = biblioteca.add(body);
+                                    } catch (Exception e){
+                                        result = "Error al tratar de añadir libro";
+                                    }
+                                    jsonResponse.addProperty("response", result);
+                                    break;
+                                case "exit":
+                                    jsonResponse.addProperty("response", "Hasta pronto, cerrando conexión");
+                                    salida.write((jsonResponse.toString() + "\n").getBytes());
+                                    salida.flush();
+                                    entrada.close();
+                                    salida.close();
+                                    enchufeAlCliente.close();
+                                    break;
+                                default:
+                                    jsonResponse.addProperty("response", "Opción no válida. Por favor, elija una opción del 1 al 5.");
+                                    break;
                             }
-                        }
 
-                        entrada.close();
-                        salida.close();
-                        enchufeAlCliente.close();
-                    } catch (IOException e) {
-                        System.out.println(e.getMessage());
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                            // El método getBytes convierte la salida a bytes para que se pueda recibir por el cliente.
+                            System.out.println("SALIDA DEL SERVIDOR: " + jsonResponse);
+                            salida.write((jsonResponse.toString() + "\n").getBytes() );
+
+                        }
+                    }  catch (IOException ex) {
+                        System.out.println(ex.getMessage());
                     }
-                }).start(); // Iniciar el hilo para el cliente
+                }).start();
+
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
+
         }
     }
 }
+

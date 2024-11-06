@@ -1,7 +1,11 @@
 package CLIENTE;
+import SERVIDOR.model.Libro;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Cliente {
@@ -28,10 +32,13 @@ public class Cliente {
             // getInputStream() y getOutputStream(): permiten enviar y recibir datos a través de la conexión.
             InputStream entrada = cliente.getInputStream();
             OutputStream salida = cliente.getOutputStream();
-            String texto = "";
-            String textInput = "";
+            BufferedReader reader = new BufferedReader(new InputStreamReader(entrada));
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(salida), true);
+            
+            String option = "";
+            String bodyInput = "";
 
-            while (!texto.trim().equals("5")) {
+            while (!option.trim().equals("5")) {
 
                 // Mostrar el menú de opciones
                 System.out.println("Menú de opciones:");
@@ -43,49 +50,70 @@ public class Cliente {
                 System.out.print("Seleccione una opción: ");
 
                 // Leer la opción seleccionada por el usuario
-                texto = scanner.nextLine();
+                option = scanner.nextLine();
+                JsonObject jsonRequest = new JsonObject();
 
 
-                switch (texto) {
+                switch (option) {
                     case "1":
                         System.out.println("Introduce el ISBN");
-                        textInput = scanner.nextLine();
+                        bodyInput = scanner.nextLine();
+                        jsonRequest.addProperty("method", "findByISBN");
+                        jsonRequest.addProperty("body", bodyInput);
                         break;
                     case "2":
                         System.out.println("Introduce el título");
-                        textInput = scanner.nextLine();
+                        bodyInput = scanner.nextLine();
+                        jsonRequest.addProperty("method", "findByTitle");
+                        jsonRequest.addProperty("body", bodyInput);
                         break;
                     case "3":
                         System.out.println("Introduce el autor");
-                        textInput = scanner.nextLine();
+                        bodyInput = scanner.nextLine();
+                        jsonRequest.addProperty("method", "findByAuthor");
+                        jsonRequest.addProperty("body", bodyInput);
                         break;
                     case "4":
                         System.out.println("Introduce Isbn, Título, Autor y precio separado con comas. \n Ejemplo: \n 1234, Don Quijote, Miguel de Cervantes, 40€  ");
-                        textInput = scanner.nextLine();
+                        bodyInput = scanner.nextLine();
+                        jsonRequest.addProperty("method", "add");
+                        jsonRequest.addProperty("body", bodyInput);
                         break;
+                    case "5":
+                        System.out.println("¡Adiós!");
+                        jsonRequest.addProperty("method", "exit");
+                        jsonRequest.addProperty("body", "exit");
+                        break;
+
                     default:
                         System.out.println("Introduce una opción válida");
                 }
 
-                String outputClient = texto + "/" + textInput;
-
-                salida.write(outputClient.getBytes());
-
-                // Crear un buffer para el mensaje del servidor y leer la respuesta
-                byte[] mensaje = new byte[1000];
-                int bytesLeidos = entrada.read(mensaje); // Leer solo los bytes recibidos
-                texto = new String(mensaje, 0, bytesLeidos); // Convertir solo los bytes leídos a String
-
-                if (texto.trim().equals("FIN")) {
-                    salida.write("Hasta pronto, gracias por establecer conexión".getBytes());
-                } else {
-                    System.out.println("Servidor dice: \n" + texto);
-
+                if (!jsonRequest.has("method") || !jsonRequest.has("body")) {
+                    System.out.println("Error: La solicitud debe contener 'method' y 'body'.");
+                    continue;
                 }
+
+                salida.write((jsonRequest.toString() + "\n").getBytes());
+                String mensaje = reader.readLine();
+
+                JsonObject jsonResponse = JsonParser.parseString(mensaje).getAsJsonObject();
+                String response = jsonResponse.get("response").getAsString();
+
+
+                System.out.println("Servidor dice: \n" + response);
+
+                if (option.equals("5")) {
+                    System.out.println("Hasta pronto, gracias por establecer conexión");
+                    break;
+                }
+
             }
 
             entrada.close();
             salida.close();
+            reader.close();
+            writer.close();
             cliente.close();
             System.out.println("Comunicación cerrada");
         } catch (UnknownHostException e) {
