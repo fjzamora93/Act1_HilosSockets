@@ -1,6 +1,4 @@
 # Actividad 1. Hilos y Sockets
-Fecha de entrega:  24 nov
-
 
 ### Arquitectura del programa
 
@@ -21,94 +19,70 @@ En nuestro caso, nos enfrentamos a la problemática de que el usuario requiere e
 
 Si estuviésemos en un contexto de html y servidor web esto podríamos resolverlo a través de un sistema de URLs capaz de redirigir las peticiones de GET, PUT y POST con su respectivo body. Esta parte la podriamos resolver con el envío de un XML o un JSON con su respectivo header y cuerpo. 
 
-Sin embargo, en este contexto solamente disponemos de una consola que enviará un tipo de operación (del 1 al 5) y un cuerpo asociado a la petición que se esté enviando. Para simplificarlo al máximo, se ha optado por enviar una cadena de texto plano separada por el símbolo "/", que una vez llegue al servidor será dividida y guardada en distintas variables listas para ser usadas en la lógica interna del programa.
+En nuestro caso, hemos optado por enviar un objeto de tipo JSON con "method" y un "body".  Para ello bastará con crear un JSON object e añadir ambas propiedades, tal que así:
+
+````java
+    JsonObject jsonRequest = new JsonObject();
+    jsonRequest.addProperty("method", "findByISBN");
+    jsonRequest.addProperty("body", bodyInput);
+                        
+````
+
+Posteriormente, a la hora de enviar la petición, bastará con convertir el JSON  a texto plano antes de su envío.
+
+````java
+    salida.write((jsonRequest.toString() + "\n").getBytes());
+````
 
 ### Desarrollo del servidor
 
-La arquitectura del servidor es sutilmente más compleja. En primer lugar, debemos recibir la información que llega del cliente.
+La arquitectura del servidor es sutilmente más compleja. En primer lugar, debemos recibir la información que llega del cliente. Esta información llega como texto plano por lo que será necesario parsearla.
 
 ```java
+    JsonObject jsonRequest = JsonParser.parseString(mensaje).getAsJsonObject();
+    String method = jsonRequest.get("method").getAsString();
+    String body = jsonRequest.get("body").getAsString();
+  
+    //Preparamos la respuesta, que también irá en JSON
+    JsonObject jsonResponse = new JsonObject();
 ```
-Una vez hemos recibido la información, es necesario formatearla. Si se tratase de un JSON, aprovecharíamos para acceder a cada valor del objeto a través de la clave (por ejemplo, podríamos acceder al tipo de operación utilizando la clave "method", y al contenido de la operación a través de la clave "body"). 
+Puesto que ya tenemos el tipo de método que se quiere aplicar y un cuerpo, será suficiente con aplicar un switch-cas y guardar el resultado dentro de nuestro jsonResponse (la respuesta del servidor).
 
-En nuestro caso, como hemos recibido un String, primeramente separaremos el texto y accederemos a cada índice sabiendo que el 0 recoge el método y el 1, el body. Hecho esto, utilizamos un switch para procesar la solicitud del cliente.
+**NOTA**
+Es importante observar que tal y como se ha diseñado el programa, la respuesta del JSON irá en texto plano. Es decir, la respuesta no va a contener un objeto "Libro" o un "ArrayList" como tal. Sino que entregará una cadena de texto plano con "apareciencia" de objeto o de array -aunque sigue siendo texto plano, por lo que no podremos iterar sobre estos objetos o acceder a las propiedades del libro.
 
 ### Creación de hilos
 
-Toda esta lógica anteriormente mencionada debe quedar resguardada creando un hilo para cada cliente que haga una interacción con el servidor. 
+Toda esta lógica anteriormente mencionada debe quedar resguardada creando un hilo para cada cliente que haga una interacción con el servidor.  Para ello, crearemos un new Threat y aplicaremos una función lambda con todo lo que sucederá para cada hilo creado.
 
-Para ello, crearemos un new Threat y aplicaremos una función lambda con todo lo que sucederá para cada hilo creado.
+````java
+new Thread(() -> {
+    try {
+        InputStream entrada = enchufeAlCliente.getInputStream();
+        OutputStream salida = enchufeAlCliente.getOutputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(entrada));
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(salida), true);
+        String mensaje;
 
-### Modelo DAO - Synchronus
-
-El modelo DAO no ofrecerá mucho misterio, ya que las operaciones de consulta pueden ejecutarse de forma simultanea por diferentes hilos.
-
-Sin embargo, la operación "añadir" debe quedar bloqueada en caso de que uno de los hilos acceda a ella, y solamente desbloqueará el programa cuando concluya. Para simular este "bloqueo" -y comprobar que efectivamente el programa ha quedado bloqueado- se ha decido implementar un Threat.sleep(3000).
-
-Como comentábamos, esta función tiene el único uso de verificar que efectivamente el hilo está bloqueado (no importa cuantas veces el cliente marque la opción de añadir, siempre habrá un bloqueo mínimo de 3 segundos hasta que se curse la siguiente petición).
-
-
-
-
-
-
-### Requerimiento 1
-
-Se pide hacer dos programas cliente-servidor con sockets e hilos. 
-La aplicación servidora programa consistirá en crear una aplicación
-que gestione una serie de libros de una biblioteca virtual, 
-la aplicación cliente consumirá dicha aplicación servidora.
-
-Los libros tendrán un ISBN, un título, un autor y un precio. 
-Se encontrarán alojados en el servidor. Dicho servidor cuando arranque tendrá 
-5 libros preestablecidos con todos los datos rellenos. 
-Los libros se guardarán en memoria en cualquier tipo de estructura de datos 
-(como puede ser un lista). 
-
-El servidor deberá estar preparado para que interactúen 
-con él varios clientes (se deberá abrir un hilo por cada cliente).
-
-### 2 formas de hacer el ejercicio
-Hay 2 formas de plantear el ejercicio: 2 maquinas virtuales una actua 
-como cliente y otra como servidor o que el propio codigo 
-corra en una única máquina abriendo 2 pestañas de ejecución 
-independientes en intellij y en cada una de ellas correrá 
-de forma independiente el Servidor y el CLIENTE.main.java.Cliente.  
-
-Personalmente creo que esta es la forma mas sencilla, 
-pero estoy abierto a ambas propuestas.
-
-La aplicación cliente mostrará un menú como el que sigue:
-
-- Consultar libro por ISBN
-- Consultar libro por titulo
-- Salir de la aplicación
-- La aplicación se ejecutará hasta que el cliente decida pulsar la opción de “salir de la aplicación”.
-
-
-El cliente deberá de recoger todos los datos del usuario 
-necesarios y mandarlos al servidor en un solo envio.
+        //Resto del código
+````
 
 
 
-### Requerimiento 2
+### Modelos DAO (synchronus) y Libro
 
-Se pide añadir otra opción que sea “Consultar libros por autor”. 
-En este caso hay que tener en cuenta que puede haber varios libros por autor, 
-por lo que el servidor podrá devolver una lista de libros. 
+En este punto no nos entretendremos demasiado. Es suficinete con saber que tanto el DAO como el Libro encapsulan la lógica de los objetos creados y las operaciones CRUD (aunque en este ejercicio solo se presentan operaciones de consulta y añadido).
 
-Se recomienda pensar en grupo el formato de envio de información.
+Como detalle importante, la operación "añadir" debe quedar bloqueada en caso de que uno de los hilos acceda a ella, y solamente desbloqueará el programa cuando concluya. Para simular este "bloqueo" -y comprobar que efectivamente el programa ha quedado bloqueado- se ha decido implementar un Threat.sleep(3000) para simular que el bloqueo funciona correctamente, es decir, nunca van a llegar varias peticiones de añadir libro simultáneamente.
 
 
+### Recepción de la respuesta por el cliente
 
-### Requerimiento 3
+Para cerrar el ciclo, el cliente recibirá una response a cada petición. Para manejo de errores, es importante que el campo de "response" nunca contenga una respuesta nula. Es decir, si no existe un resultado de búsqueda, o después de añadir un libro, debe haber algún tipo de respuesta para evitar el null pointer exception. En este caso, la respuesta será un mensaje que ayudará al cliente a entender qué parámetro de la petición ha resultado infructuoso.
 
-Se pide añadir otra opción que sea “Añadir libro”. 
-En este caso el cliente pedirá todos los datos del libro y 
-los enviará al servidor para que este lo guarde en el servidor. 
+Aquí, repetimos la operación en sentido inverso: parseamos el JSON y obtenemos el contenido de la respuesta:
 
-La lista en el servidor deberá estar preparada para que solo pueda añadir
-un libro cada hilo a la vez, si algún hilo está agregando un libro, 
-los demás hilos deberán de esperar a que el hilo acabe.
-
-El cliente deberá de recoger todos los datos del usuario y mandarlos al servidor en un solo envio.
+```java
+    JsonObject jsonResponse = JsonParser.parseString(mensaje).getAsJsonObject();
+    String response = jsonResponse.get("response").getAsString();
+```

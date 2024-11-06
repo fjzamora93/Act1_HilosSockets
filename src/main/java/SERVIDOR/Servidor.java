@@ -45,16 +45,17 @@ public class Servidor {
 
                         while ((mensaje = reader.readLine()) != null) {
 
-                            // Convertir la cadena JSON recibida en un objeto JsonObject
+                            // Convertimos la cadena JSON recibida en un objeto JsonObject
                             JsonObject jsonRequest = JsonParser.parseString(mensaje).getAsJsonObject();
 
-                            // Procesar el JSON en función del método solicitado
+                            // Procesamos el JSON en función del método solicitado
                             String method = jsonRequest.get("method").getAsString();
                             String body = jsonRequest.get("body").getAsString();
                             String libroEncontrado;
                             ArrayList <Libro> listadoEncontrado;
                             JsonObject jsonResponse = new JsonObject();
 
+                            //Depuramos el código por consola
                             System.out.println(method + "\n" + body);
 
                             switch (method) {
