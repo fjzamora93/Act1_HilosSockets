@@ -57,14 +57,14 @@ public class Servidor {
 
                             // Procesamos el JSON en función del método solicitado
                             String requestHeader = jsonRequest.get("header").getAsString();
-                            String requestBody = jsonRequest.get("body").getAsString();
+                            String requestBody;
 
                             JsonArray listadoEncontrado;
 
-                            //Depuramos el código por consola
-                            System.out.println(requestHeader + "\n" + requestBody);
+
                             switch (requestHeader) {
                                 case "getByISBN":
+                                    requestBody = jsonRequest.get("body").getAsString();
                                     JsonObject libroEncontrado;
                                     libroEncontrado = biblioteca.findByIsbn(requestBody);
                                     header.addProperty("header", "getByISBN");
@@ -72,25 +72,25 @@ public class Servidor {
                                     break;
 
                                 case "getByTitle":
+                                    requestBody = jsonRequest.get("body").getAsString();
                                     listadoEncontrado = biblioteca.findByTitle(requestBody);
                                     header.addProperty("header", "getByTitle");
                                     body.add("content", listadoEncontrado);
                                     break;
 
                                 case "getByAuthor":
+                                    requestBody = jsonRequest.get("body").getAsString();
                                     listadoEncontrado = biblioteca.findByAuthor(requestBody);
                                     header.addProperty("header", "getByAuthor");
                                     body.add("content", listadoEncontrado);
                                     break;
 
                                 case "add":
-                                    // Llamar al método synchronized para añadir libro
+                                    // Llamamos a un método synchronized para añadir libro
                                     JsonObject newBook = jsonRequest.get("body").getAsJsonObject();
-
                                     boolean result = biblioteca.add(newBook);
-
-
-                                    jsonResponse.addProperty("response", result);
+                                    header.addProperty("header", "postBook");
+                                    body.addProperty("content", result);
                                     break;
                                 case "exit":
                                     jsonResponse.addProperty("response", "Hasta pronto, cerrando conexión");

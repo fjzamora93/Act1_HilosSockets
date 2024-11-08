@@ -99,6 +99,7 @@ public class Cliente {
 
                         jsonRequest.addProperty("header", "add");
                         jsonRequest.add("body", newBook);
+                        System.out.println("ENVIANDO LIBRO AL SERVIDOR: " + newBook.toString());
                         break;
                     case "5":
                         System.out.println("¡Adiós!");
@@ -154,6 +155,16 @@ public class Cliente {
                                 System.out.println(book.toString());
                             }
                         }
+                        break;
+                    case "postBook":
+                        contentResponse = bodyResponse.get("content");
+                        boolean value = contentResponse.getAsBoolean();
+                        if (value == true){
+                            System.out.println("Libro añadido correctamente");
+                        } else {
+                            System.out.println("Error al añadir libro al sistema.");
+                        }
+
                         break;
                     default:
                         System.out.println("Aún estamos trabajando en ello");

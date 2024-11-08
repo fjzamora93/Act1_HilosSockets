@@ -70,6 +70,7 @@ public class LibroDAO {
         String title = bookObject.get("title").getAsString();
         String author = bookObject.get("author").getAsString();
         String prize = bookObject.get("prize").getAsString();
+        System.out.println("AÑADIENDO LIBRO: " + bookObject.toString());
 
         Libro nuevoLibro = new Libro(isbn, title, author, prize);
         try {
@@ -78,12 +79,14 @@ public class LibroDAO {
             * simultaneamente varios mensajes, ya que el hilo está bloqueando el proceso.*/
             Thread.sleep(4000);
 
-            if (findByIsbn(nuevoLibro.getISBN()) != null){
+            if (findByIsbn(nuevoLibro.getISBN()).size() != 0){
+                System.out.println("El libro ya existe");
                 return false;
 
             } else {
                 listaLibros.add(nuevoLibro);
             }
+            return true;
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // Restaura el estado de interrupción
