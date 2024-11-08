@@ -14,10 +14,12 @@ import SERVIDOR.dao.LibroDAO;
 import com.google.gson.JsonParser;
 
 public class Servidor {
+
     public static void main(String[] args) {
         LibroDAO biblioteca = new LibroDAO();
 
-        String ipv4 = "192.168.1.87";
+
+        String ipv4 = "localhost";
         System.out.println("APLICACIÓN DE SERVIDOR");
         System.out.println("----------------------------------");
 
@@ -44,49 +46,50 @@ public class Servidor {
 
 
                         while ((mensaje = reader.readLine()) != null) {
+                            JsonObject jsonResponse = new JsonObject();
+                            JsonObject header = new JsonObject();
+                            JsonObject body = new JsonObject();
+                            jsonResponse.add("header", header);
+                            jsonResponse.add("body", body);
 
                             // Convertimos la cadena JSON recibida en un objeto JsonObject
                             JsonObject jsonRequest = JsonParser.parseString(mensaje).getAsJsonObject();
 
                             // Procesamos el JSON en función del método solicitado
-                            String method = jsonRequest.get("method").getAsString();
-                            String body = jsonRequest.get("body").getAsString();
-                            String libroEncontrado;
-                            ArrayList <Libro> listadoEncontrado;
-                            JsonObject jsonResponse = new JsonObject();
+                            String requestHeader = jsonRequest.get("header").getAsString();
+                            String requestBody = jsonRequest.get("body").getAsString();
+
+                            JsonArray listadoEncontrado;
 
                             //Depuramos el código por consola
-                            System.out.println(method + "\n" + body);
-
-                            switch (method) {
-                                case "findByISBN":
-
-                                    if (biblioteca.findByIsbn(body) == null){
-                                        libroEncontrado = "Ningún libro se corresponde al ISBN indicado";
-                                        System.out.println(libroEncontrado);
-                                    } else {
-                                        libroEncontrado = biblioteca.findByIsbn(body).toString();
-                                    }
-                                    jsonResponse.addProperty("response", libroEncontrado);
-
+                            System.out.println(requestHeader + "\n" + requestBody);
+                            switch (requestHeader) {
+                                case "getByISBN":
+                                    JsonObject libroEncontrado;
+                                    libroEncontrado = biblioteca.findByIsbn(requestBody);
+                                    header.addProperty("header", "getByISBN");
+                                    body.add("content", libroEncontrado);
                                     break;
-                                case "findByTitle":
 
-                                    listadoEncontrado = biblioteca.findByTitle(body);
-                                    jsonResponse.addProperty("response", String.valueOf(listadoEncontrado));
+                                case "getByTitle":
+                                    listadoEncontrado = biblioteca.findByTitle(requestBody);
+                                    header.addProperty("header", "getByTitle");
+                                    body.add("content", listadoEncontrado);
                                     break;
-                                case "findByAuthor":
-                                    listadoEncontrado = biblioteca.findByAuthor(body);
-                                    jsonResponse.addProperty("response", String.valueOf(listadoEncontrado));
+
+                                case "getByAuthor":
+                                    listadoEncontrado = biblioteca.findByAuthor(requestBody);
+                                    header.addProperty("header", "getByAuthor");
+                                    body.add("content", listadoEncontrado);
                                     break;
+
                                 case "add":
                                     // Llamar al método synchronized para añadir libro
-                                    String result;
-                                    try{
-                                        result = biblioteca.add(body);
-                                    } catch (Exception e){
-                                        result = "Error al tratar de añadir libro";
-                                    }
+                                    JsonObject newBook = jsonRequest.get("body").getAsJsonObject();
+
+                                    boolean result = biblioteca.add(newBook);
+
+
                                     jsonResponse.addProperty("response", result);
                                     break;
                                 case "exit":

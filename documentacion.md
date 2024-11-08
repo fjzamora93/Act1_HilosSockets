@@ -9,6 +9,18 @@ De acuerdo a los requirementos del ejercicio, y simplemente leyendo el enunciado
 3. Un modelo "Libro", correspondiente a la clase principal de nuestro programa.
 4. Un modelo DAO, que encapsulará la lógica de todas las operaciones relacionadas con el Libro.
 
+Los dos programas quedarían estructurados así:
+
+CLIENTE
+    |_ Clase main
+
+SERVIDOR
+    |_ Clase main
+    |_ DAO
+    |   |_ LibroDao
+    |_ Models
+        |_ Libro
+
 Opcionalmente, sería posible crear un "buffer libros", pero dado que el concepto del progrmaa es una "Biblioteca", se da por hecho que habrá cierta persistencia en la recopilación y almacenamiento de datos, por lo que es más apropiado trabajar con un DAO.
 
 ### Desarrollo del cliente

@@ -15,7 +15,7 @@ public class Libro {
     private String ISBN;
     private String title;
     private String author;
-    private String precio;
+    private String prize;
 
     @Override
     public boolean equals(Object o) {
@@ -36,7 +36,7 @@ public class Libro {
                 "ISBN='" + ISBN + '\'' +
                 ", titulo='" + title + '\'' +
                 ", autor='" + author + '\'' +
-                ", precio=" + precio +
+                ", prize=" + prize +
                 '}' + '\n';
     }
 

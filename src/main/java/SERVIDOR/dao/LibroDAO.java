@@ -1,6 +1,8 @@
 package SERVIDOR.dao;
 import SERVIDOR.model.Libro;
 import java.util.ArrayList;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 public class LibroDAO {
 
@@ -18,41 +20,58 @@ public class LibroDAO {
 
 
 
-    public Libro findByIsbn(String isbn){
+    public JsonObject findByIsbn(String isbn){
+        JsonObject jsonBook = new JsonObject();
+
         for (Libro book: listaLibros){
             if (book.getISBN().equals(isbn)){
-                return book;
+                jsonBook.addProperty("ISBN", book.getISBN());
+                jsonBook.addProperty("title", book.getTitle());
+                jsonBook.addProperty("author", book.getAuthor());
+                jsonBook.addProperty("prize", book.getPrize());
             }
         }
-        return null;
+        return jsonBook;
     }
 
-    public ArrayList<Libro> findByAuthor(String research){
-        ArrayList<Libro> auxList = new ArrayList<>();
+    public JsonArray findByAuthor(String research){
+        JsonArray jsonBookList = new JsonArray();
         for (Libro book: listaLibros){
             if (book.getAuthor().contains(research)){
-                auxList.add(book);
+                JsonObject jsonBook = new JsonObject();
+                jsonBook.addProperty("ISBN", book.getISBN());
+                jsonBook.addProperty("title", book.getTitle());
+                jsonBook.addProperty("author", book.getAuthor());
+                jsonBook.addProperty("prize", book.getPrize());
+                jsonBookList.add(jsonBook);
             }
         }
-        return auxList;
+        return jsonBookList;
     }
 
-    public ArrayList<Libro> findByTitle(String research){
-        ArrayList<Libro> auxList = new ArrayList<>();
+    public JsonArray findByTitle(String research){
+        JsonArray jsonBookList = new JsonArray();
         for (Libro book: listaLibros){
             if (book.getTitle().contains(research)){
-                auxList.add(book);
+                JsonObject jsonBook = new JsonObject();
+                jsonBook.addProperty("ISBN", book.getISBN());
+                jsonBook.addProperty("title", book.getTitle());
+                jsonBook.addProperty("author", book.getAuthor());
+                jsonBook.addProperty("prize", book.getPrize());
+                jsonBookList.add(jsonBook);
             }
         }
-        return auxList;
+        return jsonBookList;
     }
 
 
-    public synchronized String add(String libroString) {
-        String[] libroToArray = libroString.split(",");
+    public synchronized boolean add(JsonObject bookObject) {
+        String isbn = bookObject.get("ISBN").getAsString();
+        String title = bookObject.get("title").getAsString();
+        String author = bookObject.get("author").getAsString();
+        String prize = bookObject.get("prize").getAsString();
 
-
-        Libro nuevoLibro = new Libro(libroToArray[0], libroToArray[1], libroToArray[2], libroToArray[3]);
+        Libro nuevoLibro = new Libro(isbn, title, author, prize);
         try {
             /*Simulamos un retraso de 4 segundos.
             * Si el hilo está bien sincronizado, nunca podrán salir por consola
@@ -60,7 +79,7 @@ public class LibroDAO {
             Thread.sleep(4000);
 
             if (findByIsbn(nuevoLibro.getISBN()) != null){
-                return "El libro ya se encuentra registrado";
+                return false;
 
             } else {
                 listaLibros.add(nuevoLibro);
@@ -70,9 +89,9 @@ public class LibroDAO {
             Thread.currentThread().interrupt(); // Restaura el estado de interrupción
         } catch (Exception e){
             System.out.println("Datos incompletos, introduce un formato de libro válido");
-            return "Datos incompletos, introduce un formato de libro válido";
+            return false;
         }
-        return nuevoLibro.getTitle() + " añadido con éxito a la base de datos";
+        return true;
     }
 
 

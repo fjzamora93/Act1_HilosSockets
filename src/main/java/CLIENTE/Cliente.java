@@ -1,5 +1,7 @@
 package CLIENTE;
 import SERVIDOR.model.Libro;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -10,10 +12,12 @@ import java.util.Scanner;
 
 public class Cliente {
     public static void main(String[] args) throws InterruptedException {
-        String ipv4 = "192.168.1.87";
+        String ipv4 = "localhost";
         System.out.println("APLICACIÓN CLIENTE");
         System.out.println("-----------------------------------");
         Scanner scanner = new Scanner(System.in);
+
+
 
         try {
 
@@ -58,30 +62,47 @@ public class Cliente {
                     case "1":
                         System.out.println("Introduce el ISBN");
                         bodyInput = scanner.nextLine();
-                        jsonRequest.addProperty("method", "findByISBN");
+                        jsonRequest.addProperty("header", "getByISBN");
                         jsonRequest.addProperty("body", bodyInput);
                         break;
                     case "2":
                         System.out.println("Introduce el título");
                         bodyInput = scanner.nextLine();
-                        jsonRequest.addProperty("method", "findByTitle");
+                        jsonRequest.addProperty("header", "getByTitle");
                         jsonRequest.addProperty("body", bodyInput);
                         break;
                     case "3":
                         System.out.println("Introduce el autor");
                         bodyInput = scanner.nextLine();
-                        jsonRequest.addProperty("method", "findByAuthor");
+                        jsonRequest.addProperty("header", "getByAuthor");
                         jsonRequest.addProperty("body", bodyInput);
                         break;
                     case "4":
-                        System.out.println("Introduce Isbn, Título, Autor y precio separado con comas. \n Ejemplo: \n 1234, Don Quijote, Miguel de Cervantes, 40€  ");
+
+                        JsonObject newBook = new JsonObject();
+                        System.out.println("Introduce un ISBN");
                         bodyInput = scanner.nextLine();
-                        jsonRequest.addProperty("method", "add");
-                        jsonRequest.addProperty("body", bodyInput);
+                        newBook.addProperty("ISBN", bodyInput);
+
+                        System.out.println("Introduce un título");
+                        bodyInput = scanner.nextLine();
+                        newBook.addProperty("title", bodyInput);
+
+                        System.out.println("Introduce un autor");
+                        bodyInput = scanner.nextLine();
+                        newBook.addProperty("author", bodyInput);
+
+                        System.out.println("Introduce un precio");
+                        bodyInput = scanner.nextLine();
+                        newBook.addProperty("prize", bodyInput);
+
+
+                        jsonRequest.addProperty("header", "add");
+                        jsonRequest.add("body", newBook);
                         break;
                     case "5":
                         System.out.println("¡Adiós!");
-                        jsonRequest.addProperty("method", "exit");
+                        jsonRequest.addProperty("header", "exit");
                         jsonRequest.addProperty("body", "exit");
                         break;
 
@@ -89,19 +110,55 @@ public class Cliente {
                         System.out.println("Introduce una opción válida");
                 }
 
-                if (!jsonRequest.has("method") || !jsonRequest.has("body")) {
-                    System.out.println("Error: La solicitud debe contener 'method' y 'body'.");
+                if (!jsonRequest.has("header") || !jsonRequest.has("body")) {
+                    System.out.println("Error: La solicitud debe contener 'header' y 'body'.");
                     continue;
                 }
 
                 salida.write((jsonRequest.toString() + "\n").getBytes());
+
+                //Recepción de la respuesta
                 String mensaje = reader.readLine();
-
                 JsonObject jsonResponse = JsonParser.parseString(mensaje).getAsJsonObject();
-                String response = jsonResponse.get("response").getAsString();
+                JsonObject headerResponse = jsonResponse.getAsJsonObject("header");
+                JsonObject bodyResponse = jsonResponse.getAsJsonObject("body");
 
+                // Acceder a los valores dentro del header y el body
+                String messageHeader = headerResponse.get("header").getAsString();
+                JsonElement contentResponse;
 
-                System.out.println("Servidor dice: \n" + response);
+                switch (messageHeader){
+                    case "getByISBN":
+                        contentResponse = bodyResponse.getAsJsonObject("content");
+                        JsonObject selectedBook = contentResponse.getAsJsonObject();
+                        // En este punto, el cliente ya dispone del objeto "Libro", por lo que si quisiera podría extraer sus atributos.
+                        // String isbn = libro.get("ISBN").getAsString();
+                        // String title = libro.get("title").getAsString();
+                        // etc...
+                        if (selectedBook.size() == 0) {
+                            System.out.println("No se encontró ningún libro con el ISBN indicado.");
+                        } else {
+                            System.out.println(selectedBook.toString());
+                        }
+                        break;
+                    case "getByTitle":
+                    case "getByAuthor":
+                        contentResponse = bodyResponse.get("content");
+                        JsonArray selectedBooks = contentResponse.getAsJsonArray();
+                        if (selectedBooks.isEmpty()) {
+                            System.out.println("No se encontró ningún libro con ese parámetro de búsqueda.");
+                        } else {
+                            System.out.println("Libros encontrados:");
+                            for (JsonElement book: selectedBooks) {
+                                JsonObject libroElegido = book.getAsJsonObject();
+                                System.out.println(book.toString());
+                            }
+                        }
+                        break;
+                    default:
+                        System.out.println("Aún estamos trabajando en ello");
+                }
+
 
                 if (option.equals("5")) {
                     System.out.println("Hasta pronto, gracias por establecer conexión");
