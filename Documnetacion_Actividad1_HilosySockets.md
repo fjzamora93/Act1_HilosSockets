@@ -4,13 +4,15 @@
 
 Como paso previo comenzamos diseñando la arquitectura del programa a desarrollar.
 De acuerdo a los requirementos del ejercicio, y simplemente leyendo el enunciado, sabemos que necesitaremos los siguientes componentes:
-1. Un servidor, donde se ejecutarán todas las operaciones "sensibles" y la lógica interna de la aplicación.
-2. Un cliente, donde se ejecutarán las operaciones de interacción con el servidor.
-3. Un modelo "Libro", correspondiente a la clase principal de nuestro programa.
+
+1. Un cliente, donde se ejecutarán las operaciones de interacción con el servidor.
+2. Un servidor, donde se ejecutarán todas las operaciones "sensibles" y la lógica interna de la aplicación.
+3. Un modelo "Libro" -para representar nuestro objeto "Libro".
 4. Un modelo DAO, que encapsulará la lógica de todas las operaciones relacionadas con el Libro.
 
 Los dos programas quedarían estructurados así:
 
+````
 CLIENTE
     |_ Clase main
 
@@ -20,6 +22,7 @@ SERVIDOR
     |   |_ LibroDao
     |_ Models
         |_ Libro
+````
 
 Opcionalmente, sería posible crear un "buffer libros", pero dado que el concepto del progrmaa es una "Biblioteca", se da por hecho que habrá cierta persistencia en la recopilación y almacenamiento de datos, por lo que es más apropiado trabajar con un DAO.
 
@@ -231,7 +234,9 @@ Dentro del DAO, el único método que tiene cierta complejidad es el de añadir 
 
 ### Observaciones
 
-- Dentro del código hay varios mensajes por consola para depurar y comprobar que el programa funciona correctamente. En un caso real, estos mensajes deberían ser eliminados o comentados.s
+- Legibilidad del código: la clase "Cliente" es demasiado extensa y debería dividirse en varios clases (una para gestionar los sockets, otra para procesar la respuesta), de tal forma que cada una tenga una responsabilidad única (SOLID).
+
+- Dentro del código hay varios mensajes por consola para depurar y comprobar que el programa funciona correctamente. En un caso real, estos mensajes deberían ser eliminados o comentados.
 
 - La propiedad "prize" del libro se ha declarado como String, aunque en un caso real debería ser un tipo numérico (double o float). Al no haber operaciones aritméticas, y para evitar tener que realizar un casting, se ha simplificado como String.
 
