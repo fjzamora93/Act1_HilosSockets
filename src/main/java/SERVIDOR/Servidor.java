@@ -18,7 +18,6 @@ public class Servidor {
     public static void main(String[] args) {
         LibroDAO biblioteca = new LibroDAO();
 
-
         String ipv4 = "localhost";
         System.out.println("APLICACIÓN DE SERVIDOR");
         System.out.println("----------------------------------");
@@ -38,34 +37,35 @@ public class Servidor {
                 new Thread(() -> {
 
                     try {
+                        //ENTRADA
                         InputStream entrada = enchufeAlCliente.getInputStream();
-                        OutputStream salida = enchufeAlCliente.getOutputStream();
                         BufferedReader reader = new BufferedReader(new InputStreamReader(entrada));
-                        PrintWriter writer = new PrintWriter(new OutputStreamWriter(salida), true);
                         String mensaje;
 
+                        //SALIDA
+                        OutputStream salida = enchufeAlCliente.getOutputStream();
+                        PrintWriter writer = new PrintWriter(new OutputStreamWriter(salida), true);
 
                         while ((mensaje = reader.readLine()) != null) {
+                            // Objeto para ENVIAR respuesta al CLIENTE
                             JsonObject jsonResponse = new JsonObject();
                             JsonObject header = new JsonObject();
                             JsonObject body = new JsonObject();
                             jsonResponse.add("header", header);
                             jsonResponse.add("body", body);
 
-                            // Convertimos la cadena JSON recibida en un objeto JsonObject
+                            // Objeto para RECIBIR petición
                             JsonObject jsonRequest = JsonParser.parseString(mensaje).getAsJsonObject();
-
-                            // Procesamos el JSON en función del método solicitado
                             String requestHeader = jsonRequest.get("header").getAsString();
                             String requestBody;
 
+                            //Declaración de variables
                             JsonArray listadoEncontrado;
-
+                            JsonObject libroEncontrado;
 
                             switch (requestHeader) {
                                 case "getByISBN":
                                     requestBody = jsonRequest.get("body").getAsString();
-                                    JsonObject libroEncontrado;
                                     libroEncontrado = biblioteca.findByIsbn(requestBody);
                                     header.addProperty("header", "getByISBN");
                                     body.add("content", libroEncontrado);
@@ -93,8 +93,9 @@ public class Servidor {
                                     body.addProperty("content", result);
                                     break;
                                 case "exit":
-                                    jsonResponse.addProperty("response", "Hasta pronto, cerrando conexión");
-                                    salida.write((jsonResponse.toString() + "\n").getBytes());
+                                    header.addProperty("header", "exit");
+                                    body.addProperty("content", "Hasta pronto, cerrando conexión");
+                                    salida.write((jsonResponse.toString() + "\n").getBytes() );
                                     salida.flush();
                                     entrada.close();
                                     salida.close();

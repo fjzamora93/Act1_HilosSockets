@@ -35,15 +35,16 @@ public class Cliente {
 
             // getInputStream() y getOutputStream(): permiten enviar y recibir datos a través de la conexión.
             InputStream entrada = cliente.getInputStream();
-            OutputStream salida = cliente.getOutputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(entrada));
+
+            OutputStream salida = cliente.getOutputStream();
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(salida), true);
-            
+
+
             String option = "";
             String bodyInput = "";
 
             while (!option.trim().equals("5")) {
-
                 // Mostrar el menú de opciones
                 System.out.println("Menú de opciones:");
                 System.out.println("1. Consultar libro por ISBN");
@@ -126,11 +127,10 @@ public class Cliente {
 
                 // Acceder a los valores dentro del header y el body
                 String messageHeader = headerResponse.get("header").getAsString();
-                JsonElement contentResponse;
+                JsonElement contentResponse = bodyResponse.get("content");
 
                 switch (messageHeader){
                     case "getByISBN":
-                        contentResponse = bodyResponse.getAsJsonObject("content");
                         JsonObject selectedBook = contentResponse.getAsJsonObject();
                         // En este punto, el cliente ya dispone del objeto "Libro", por lo que si quisiera podría extraer sus atributos.
                         // String isbn = libro.get("ISBN").getAsString();
@@ -144,20 +144,20 @@ public class Cliente {
                         break;
                     case "getByTitle":
                     case "getByAuthor":
-                        contentResponse = bodyResponse.get("content");
                         JsonArray selectedBooks = contentResponse.getAsJsonArray();
                         if (selectedBooks.isEmpty()) {
                             System.out.println("No se encontró ningún libro con ese parámetro de búsqueda.");
                         } else {
                             System.out.println("Libros encontrados:");
                             for (JsonElement book: selectedBooks) {
+                                // String isbn = libroElegido.get("ISBN").getAsString();
+                                // Acceso al resto de propiedades
                                 JsonObject libroElegido = book.getAsJsonObject();
                                 System.out.println(book.toString());
                             }
                         }
                         break;
                     case "postBook":
-                        contentResponse = bodyResponse.get("content");
                         boolean value = contentResponse.getAsBoolean();
                         if (value == true){
                             System.out.println("Libro añadido correctamente");
@@ -167,7 +167,7 @@ public class Cliente {
 
                         break;
                     default:
-                        System.out.println("Aún estamos trabajando en ello");
+                        System.out.println("¡Aún estamos trabajando en esta funcionalidad!");
                 }
 
 
