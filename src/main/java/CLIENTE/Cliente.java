@@ -1,5 +1,6 @@
 package CLIENTE;
-import SERVIDOR.model.Libro;
+import CLIENTE.service.LibroService;
+import model.Libro;
 import com.google.gson.*;
 
 import java.io.*;
@@ -14,15 +15,13 @@ public class Cliente {
         System.out.println("APLICACIÓN CLIENTE");
         System.out.println("-----------------------------------");
         Scanner scanner = new Scanner(System.in);
+        String option = "";
 
         try {
-            /**Un InetSocketAddress es solo una combinación de una dirección IP (o nombre de host) y un número de puerto.
-             * No es una conexión en sí misma, sino una dirección que indica a qué IP y puerto se quiere conectar o enlazar. */
             ClienteSocket clienteSocket = new ClienteSocket(ipv4, port);
-            String option = "";
+            LibroService libroService = new LibroService(clienteSocket);
 
             while (!option.trim().equals("5")) {
-                Thread.sleep(2000); //Ralentizamos el bucle para que no salga muy de seguido
 
                 // MENÚ
                 System.out.println("Menú de opciones:");
@@ -36,19 +35,34 @@ public class Cliente {
                 // LECTURA DE LA OPCIÓN INTRODUCIDA
                 option = scanner.nextLine();
                 JsonObject jsonRequest = new JsonObject();
-
+                Libro libro;
+                ArrayList <Libro> libros;
                 switch (option) {
                     case "1":
-                        consultarPorISBN(scanner, clienteSocket);
+                        System.out.println("Introduce el ISBN");
+                        String isbn = scanner.nextLine();
+                        libro = libroService.findOne("ISBN", isbn);
+                        consoleLog(libro);
                         break;
                     case "2":
-                        consultarVarios("Title", scanner, clienteSocket);
+                        System.out.println("Introduce el título");
+                        String title = scanner.nextLine();
+                        libros = libroService.findMany("Title", title);
+                        consoleLog(libros);
                         break;
                     case "3":
-                        consultarVarios("Author", scanner, clienteSocket);
+                        System.out.println("Introduce el autor");
+                        String autor = scanner.nextLine();
+                        libros = libroService.findMany("Author", autor);
+                        consoleLog(libros);
                         break;
                     case "4":
-                        añadirLibro(scanner, clienteSocket);
+                        Libro newBook = recopilarDatosNewBook(scanner);
+                        if (libroService.add(newBook)){
+                            System.out.println("Libro añadido correctamente");
+                        } else {
+                            System.out.println("Lo lamentamos, pero no ha sido posible añadir el libro.");
+                        }
                         break;
                     case "5":
                         System.out.println("Hasta pronto, gracias por establecer conexión");
@@ -59,7 +73,6 @@ public class Cliente {
                     default:
                         System.out.println("Introduce una opción válida");
                 }
-
             }
 
         } catch (UnknownHostException e) {
@@ -72,122 +85,29 @@ public class Cliente {
     }
 
 
-    private static void consultarPorISBN(Scanner scanner, ClienteSocket clienteSocket) throws IOException {
-        System.out.println("Introduce el ISBN");
-        String isbn = scanner.nextLine();
-        JsonObject jsonRequest = new JsonObject();
-        jsonRequest.addProperty("header", "getByISBN");
-        jsonRequest.addProperty("body", isbn);
-        clienteSocket.sendMessage(jsonRequest.toString());
-
-        String respuesta = clienteSocket.receiveMessage();
-        procesarRespuestaUnLibro(respuesta);
-    }
-
-    private static void consultarVarios(
-            String criterioConsulta,
-            Scanner scanner,
-            ClienteSocket clienteSocket
-    ) throws IOException {
-        JsonObject jsonRequest = new JsonObject();
-        System.out.println("Introduce el " + criterioConsulta);
-        String bodyInput = scanner.nextLine();
-        jsonRequest.addProperty("header", "getBy"+criterioConsulta);
-        jsonRequest.addProperty("body", bodyInput);
-
-        clienteSocket.sendMessage(jsonRequest.toString());
-        String respuesta = clienteSocket.receiveMessage();
-        procesarRespuestaVariosLibros(respuesta);
-
-    }
-
-    private static void procesarRespuestaUnLibro(String respuesta) {
-        Gson gson = new Gson();
-        JsonObject jsonResponse = JsonParser.parseString(respuesta).getAsJsonObject();
-        JsonObject headerResponse = jsonResponse.getAsJsonObject("header");
-        JsonObject bodyResponse = jsonResponse.getAsJsonObject("body");
-
-        // Acceder a los valores dentro del header y el body
-        String messageHeader = headerResponse.get("header").getAsString();
-        JsonElement contentResponse = bodyResponse.get("content");
-        JsonObject selectedBook = contentResponse.getAsJsonObject();
-
-        if (selectedBook.size() == 0 ) {
-            System.out.println("No se encontró ningún libro con el ISBN indicado.");
-        } else {
-            Libro libro = gson.fromJson(selectedBook, Libro.class);
-            System.out.println("Libro encontrado: " + libro.toString());
-        }
-    }
-
-
-    private static void procesarRespuestaVariosLibros(String respuesta){
-        Gson gson = new Gson();
-        JsonObject jsonResponse = JsonParser.parseString(respuesta).getAsJsonObject();
-        JsonObject headerResponse = jsonResponse.getAsJsonObject("header");
-        JsonObject bodyResponse = jsonResponse.getAsJsonObject("body");
-
-        // Acceder a los valores dentro del header y el body
-        String messageHeader = headerResponse.get("header").getAsString();
-        JsonElement contentResponse = bodyResponse.get("content");
-        JsonArray selectedBooks = contentResponse.getAsJsonArray();
-
-        if (selectedBooks.isEmpty()) {
-            System.out.println("No se encontró ningún libro con ese parámetro de búsqueda.");
-        } else {
-            System.out.println("Libros encontrados:");
-            for (JsonElement book: selectedBooks) {
-                // String isbn = libroElegido.get("ISBN").getAsString();
-                // Acceso al resto de propiedades
-                JsonObject libroElegido = book.getAsJsonObject();
-                System.out.println(book.toString());
-            }
-        }
-    }
-
-    private static void añadirLibro(Scanner scanner, ClienteSocket clienteSocket) throws IOException {
-        JsonObject jsonRequest = new JsonObject();
-        JsonObject newBook = new JsonObject();
-
+    private static Libro recopilarDatosNewBook(Scanner scanner){
         System.out.println("Introduce un ISBN");
-        String bodyInput = scanner.nextLine();
-        newBook.addProperty("ISBN", bodyInput);
+        String isbn = scanner.nextLine();
 
         System.out.println("Introduce un título");
-        bodyInput = scanner.nextLine();
-        newBook.addProperty("title", bodyInput);
+        String title = scanner.nextLine();
 
         System.out.println("Introduce un autor");
-        bodyInput = scanner.nextLine();
-        newBook.addProperty("author", bodyInput);
+        String author = scanner.nextLine();
 
         System.out.println("Introduce un precio");
-        bodyInput = scanner.nextLine();
-        newBook.addProperty("prize", bodyInput);
+        String prize = scanner.nextLine();
+        return new Libro(isbn, title, author, prize);
+    }
 
-
-        jsonRequest.addProperty("header", "add");
-        jsonRequest.add("body", newBook);
-        System.out.println("ENVIANDO LIBRO AL SERVIDOR: " + newBook.toString());
-        clienteSocket.sendMessage(jsonRequest.toString());
-
-
-        //Recepción de la respuesta
-        String mensaje = clienteSocket.receiveMessage();
-        JsonObject jsonResponse = JsonParser.parseString(mensaje).getAsJsonObject();
-        JsonObject headerResponse = jsonResponse.getAsJsonObject("header");
-        JsonObject bodyResponse = jsonResponse.getAsJsonObject("body");
-
-        // Acceder a los valores dentro del header y el body
-        String messageHeader = headerResponse.get("header").getAsString();
-        JsonElement contentResponse = bodyResponse.get("content");
-        boolean value = contentResponse.getAsBoolean();
-        if (value == true){
-            System.out.println("Libro añadido correctamente");
+    //Creamos un método para pintar por consola
+    private static void consoleLog(Object object) throws InterruptedException {
+        if (object != null ) {
+            System.out.println("Encontrado: \n" + object.toString());
         } else {
-            System.out.println("Error al añadir libro al sistema.");
+            System.out.println("No hay coincidencias de búsqueda");
         }
-
+        Thread.sleep(2000);
     }
 
 }

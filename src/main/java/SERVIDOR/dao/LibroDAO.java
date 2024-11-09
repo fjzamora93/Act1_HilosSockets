@@ -1,5 +1,5 @@
 package SERVIDOR.dao;
-import SERVIDOR.model.Libro;
+import model.Libro;
 import java.util.ArrayList;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

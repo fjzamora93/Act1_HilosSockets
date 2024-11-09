@@ -1,4 +1,4 @@
-package CLIENTE.model;
+package model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,13 +9,19 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
 public class Libro {
     private String ISBN;
     private String title;
     private String author;
     private String prize;
+
+    public Libro(String ISBN, String title, String author, String prize) {
+        this.ISBN = ISBN;
+        this.title = title;
+        this.author = author;
+        this.prize = prize;
+    }
 
     @Override
     public boolean equals(Object o) {

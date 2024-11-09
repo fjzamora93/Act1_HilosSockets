@@ -4,9 +4,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 
-import SERVIDOR.model.Libro;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
