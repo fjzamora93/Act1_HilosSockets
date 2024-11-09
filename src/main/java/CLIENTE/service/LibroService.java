@@ -41,11 +41,14 @@ public class LibroService {
         jsonRequest.add("body", newBook);
 
         clienteSocket.sendMessage(jsonRequest.toString());
-        String mensaje = clienteSocket.receiveMessage();
+        String respuesta = clienteSocket.receiveMessage();
+        ArrayList<Libro> listadoResultados = procesarRespuestaVariosLibros(respuesta);
 
-        JsonObject jsonResponse = JsonParser.parseString(mensaje).getAsJsonObject();
-        JsonObject bodyResponse = jsonResponse.getAsJsonObject("body");
-        return bodyResponse.get("content").getAsBoolean();
+        if (listadoResultados.isEmpty()){
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private Libro procesarRespuestaUnLibro(String respuesta) {

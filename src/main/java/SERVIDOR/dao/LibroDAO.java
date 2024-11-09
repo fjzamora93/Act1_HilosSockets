@@ -1,4 +1,5 @@
 package SERVIDOR.dao;
+import com.google.gson.Gson;
 import model.Libro;
 import java.util.ArrayList;
 import com.google.gson.JsonArray;
@@ -8,7 +9,7 @@ public class LibroDAO {
 
     private Libro libro;
     private ArrayList<Libro> listaLibros;
-
+    private Gson gson = new Gson();
     public LibroDAO() {
         this.listaLibros = new ArrayList<>();
         this.listaLibros.add(new Libro("1A", "Harry Potter y la piedra filosofal", "J.K. Rowling", "15.99"));
@@ -65,7 +66,9 @@ public class LibroDAO {
     }
 
 
-    public synchronized boolean add(JsonObject bookObject) {
+    public synchronized JsonArray add(JsonObject bookObject) {
+        JsonArray jsonBookList = new JsonArray();
+
         String isbn = bookObject.get("ISBN").getAsString();
         String title = bookObject.get("title").getAsString();
         String author = bookObject.get("author").getAsString();
@@ -81,20 +84,18 @@ public class LibroDAO {
 
             if (findByIsbn(nuevoLibro.getISBN()).size() != 0){
                 System.out.println("El libro ya existe");
-                return false;
-
             } else {
                 listaLibros.add(nuevoLibro);
+                JsonObject libroJson = gson.toJsonTree(nuevoLibro).getAsJsonObject();
+                jsonBookList.add(libroJson);
             }
-            return true;
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // Restaura el estado de interrupción
         } catch (Exception e){
             System.out.println("Datos incompletos, introduce un formato de libro válido");
-            return false;
         }
-        return true;
+        return jsonBookList;
     }
 
 

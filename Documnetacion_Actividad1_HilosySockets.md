@@ -184,67 +184,20 @@ La clase main del cliente únicamente se encargará de simular una interfaz grá
 
 # Desarrollo del Servidor
 
-A la hora de recibir la respuesta en el cliente, también se ha optado por utilizar un formato JSON, que en este caso bien podrá recibirse dentro del "body" un JSON Object -para cuando se reciba un solo libro-, un JSON Array -para cuando en la consulta se requieran varios libros.
+La arquitectura del servidor, al ser menos compleja (para este ejercicio) la vamos a reducir a la clase principal (Servidor) y al modelo DAO (LibroDAO).
+Si el servidor siguiese creciendo, sería necesario incorporar una clase para mejorar la lógica de los sockets y la conexión, y otra clase para gestionar las respuestas.
 
-Para recibir la respuesta, bastará con parsear el JSON y obtener el contenido del "body" de la respuesta:
+Pero por el momento, esto es lo que encontraremos dentro del servidor:
 
-````java
-    InputStream entrada = cliente.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(entrada));
-    //Resto del código para recibir la respuesta
-    //...
+1. Un método main con un socket para establecer la conexión con un bucle while que establecerá una conexión con cada cliente que se conecte.
+2. Un método para gestionar cada petición entrante, y que contará con un bucle para seguir recibiendo peticiones hasta cerrar la conexión.
+3. Un método para procesar la petición y enviar la respuesta al cliente.
 
-    String mensaje = reader.readLine();
-    JsonObject jsonResponse = JsonParser.parseString(mensaje).getAsJsonObject();
-    JsonObject headerResponse = jsonResponse.getAsJsonObject("header");
-    JsonObject bodyResponse = jsonResponse.getAsJsonObject("body");
-
-    
-````
-
-Posteriormente, debemos saber hacer una correcta lectura tanto del header como del body. Nosotros sabemos que el header únicamente contiene un String (aunque en un caso real podría contener todo tipo de información). Sin embargo, el body puede ser tanto un Array como un Object o un Boolean, lo que nos obliga a tratar el body como un JSON Element y no especificar de qué tipo se trata.
+Al final, el método main del servidor quedaría así:
 
 ````java
-    String messageHeader = headerResponse.get("header").getAsString();
-    JsonElement contentResponse = bodyResponse.get("content");
+public static void main(String[] args) {
 
-````
-
-El siguiente paso será tratar el contenido del body. En este caso, se ha optado por un switch-case para tratar los diferentes tipos de respuesta que se pueden recibir:
-
-````java
-    switch (messageHeader) {
-        case "getByISBN":
-            JsonObject selectedBook = contentResponse.getAsJsonObject();
-            break;
-        case "getByTitle": case "getByAuthor":
-            JsonArray selectedBooks = contentResponse.getAsJsonArray();
-            break;
-        case "postBook":
-            boolean value = contentResponse.getAsBoolean();
-            break;
-    }
-````
-
-Hecho este paso, ya disponemos dentro del cliente tanto el objeto Libro como el Array, lo cuál nos permitirá acceder libremente tanto a las propiedades de cada objeto recuperado, como iterar sobre cada objeto del array. Como paso final, verificamos que el array no está vacío (! array.isEmpty) o que su tamaño es mayor que 0 (object.size() != 0). Si se cumple alguna de estas condiciones, debemos informar al cliente que no se ha recuperado ningún objeto del servidor. 
-
-Para el caso de postBook, se ha optado por notificar con un boolean si la operación ha sido exitosa o no.
-
-
-
-## Desarrollo del servidor
-
-La arquitectura del servidor es sutilmente más compleja. Una vez se ha establecido exitosamente la conexión, debemos recibir la información que llega del cliente. Esta información llega como texto plano por lo que será necesario parsearla.
-
-
-### Estableciendo la conexión
-
-```java
-lic class Servidor {
-
-    public static void main(String[] args) {
-        LibroDAO biblioteca = new LibroDAO();
-        
         String ipv4 = "localhost";
         System.out.println("APLICACIÓN DE SERVIDOR");
         System.out.println("----------------------------------");
@@ -261,63 +214,59 @@ lic class Servidor {
                 System.out.println("Comunicación entrante");
 
                 // Creamos un nuevo hilo para manejar al cliente
-                new Thread(() -> {
-                    // Resto del código
+                new Thread(() -> manejarCliente(enchufeAlCliente)).start();
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
 
-```
+        }
+    }
+````
 
-Una vez está la conexión está establecida, debemos crear un hilo para cada cliente (new Thread()). El hilo espera como parámetro una función lambda que se ejecutará cada vez que un cliente se conecte al servidor. Dentro del hilo, definimos los pasos a seguir para recibir la petición del cliente y enviar la respuesta (el InputStream y el OutputStream, con sus respectivos reader y writer).
-
-```java
-     //ENTRADA
-    InputStream entrada = enchufeAlCliente.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(entrada));
-    String mensaje = reader.readLine();
-
-    //SALIDA
-    OutputStream salida = enchufeAlCliente.getOutputStream();
-    PrintWriter writer = new PrintWriter(new OutputStreamWriter(salida), true);
-    
-
-```
-
-### Recepción de la petición
-
-Los canales ya están abierto y se pueden recibir mensajes. Ahora toca "descifrar" las peticiones entrantes. Nosotros hemos decidido trabajar con objetos de tipo JSON. Eso nos obliga a parsear el texto plano que llega del cliente y convertirlo en un objeto JSON. 
-
-
-```java
-    while (mensaje != null) {
-        // Objeto para ENVIAR respuesta al CLIENTE
-        JsonObject jsonResponse = new JsonObject();
-        JsonObject header = new JsonObject();
-        JsonObject body = new JsonObject();
-        jsonResponse.add("header", header);
-        jsonResponse.add("body", body);
-
-        // Objeto para RECIBIR petición
-        JsonObject jsonRequest = JsonParser.parseString(mensaje).getAsJsonObject();
-        String requestHeader = jsonRequest.get("header").getAsString();
-        String requestBody;
-```
-Puesto que ya tenemos el tipo de método que se quiere aplicar y un cuerpo, será suficiente con aplicar un switch-case y guardar el resultado dentro de nuestro jsonResponse (la respuesta del servidor). A su vez, la respuesta irá con header, que permitirá al cliente saber qué tiene que hacer con cada respuesta, y un body, con el contenido propiamente.
-
-### Posibles respuestas
-
-Como veaíamos en el cliente, existen diferentes posibles respuestas, que pueden ir en los siguientes formatos:
-
-1. Un JsonObject (si solo se devuelve un libro).
-2. Un JsonArray (si se devuelven varios libros).
-3. Un boolean (si se ha añadido un libro, que puede resultar en true o false).
-4. Un objeto o un array vacío (si no hay coincidencias en la base de datos).
-5. Un mensaje de salida para cuando se cierra la conexión.
-
-
-Sea cual sea el objeto de respuesta del servidor, lo convertiremos a texto plano y lo enviaremos:
+Cada nueva petición entrante creará un nuevo hilo. Dentro de ese hilo, se cursarán las peticiones de forma individual:
 
 ````java
-    salida.write((jsonResponse.toString() + "\n").getBytes() );
+public static void manejarCliente(Socket enchufeAlCliente){
+        LibroDAO biblioteca = new LibroDAO();
+        try {
+            //ENTRADA
+            InputStream entrada = enchufeAlCliente.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(entrada));
+            String mensaje;
+            //SALIDA
+            OutputStream salida = enchufeAlCliente.getOutputStream();
+
+            while ((mensaje = reader.readLine()) != null) {
+
+                // Objeto para RECIBIR petición
+                JsonObject jsonRequest = JsonParser.parseString(mensaje).getAsJsonObject();
+                String requestHeader = jsonRequest.get("header").getAsString();
+                String requestBody;
+                JsonElement jsonResult;
+
+                switch (requestHeader) {
+                // AQUÍ CLASIFICAMOS LA PETICIÓN
 ````
+
+Para el envío de la petición, se ha creado un método que tomará como parámetros el outputStream, el header y el contenido del body. No es imprescindible como tal, pero el método retornará la respuesta (por si fuese necesario utilizarla en un futuro para algo).
+
+
+````java
+ private static JsonObject sendResponse(String headerContent, JsonElement bodyContent, OutputStream salida ) throws IOException {
+        JsonObject jsonResponse = new JsonObject();
+        JsonObject responseHeader = new JsonObject();
+        JsonObject responseBody = new JsonObject();
+        jsonResponse.add("header", responseHeader);
+        jsonResponse.add("body", responseBody);
+        responseHeader.addProperty("header", headerContent);
+        responseBody.add("content", bodyContent);
+        System.out.println("SALIDA DEL SERVIDOR: " + jsonResponse);
+        salida.write((jsonResponse.toString() + "\n").getBytes() );
+        return jsonResponse;
+    }
+    
+````
+
 
 ### Modelos DAO (synchronus) y Libro
 
@@ -327,7 +276,9 @@ Como detalle importante, la operación "añadir" debe quedar bloqueada en caso d
 
 ````java
 
-    public synchronized boolean add(JsonObject bookObject) {
+    public synchronized JsonArray add(JsonObject bookObject) {
+        JsonArray jsonBookList = new JsonArray();
+
         String isbn = bookObject.get("ISBN").getAsString();
         String title = bookObject.get("title").getAsString();
         String author = bookObject.get("author").getAsString();
@@ -343,28 +294,27 @@ Como detalle importante, la operación "añadir" debe quedar bloqueada en caso d
 
             if (findByIsbn(nuevoLibro.getISBN()).size() != 0){
                 System.out.println("El libro ya existe");
-                return false;
-
             } else {
                 listaLibros.add(nuevoLibro);
+                JsonObject libroJson = gson.toJsonTree(nuevoLibro).getAsJsonObject();
+                jsonBookList.add(libroJson);
             }
-            return true;
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // Restaura el estado de interrupción
         } catch (Exception e){
             System.out.println("Datos incompletos, introduce un formato de libro válido");
-            return false;
         }
-        return true;
+        return jsonBookList;
     }
 ````
 
-Dentro del DAO, el único método que tiene cierta complejidad es el de añadir libro, que, como comentábamos antes, recibe un objeto completo y necesitará acceder a cada propiedad de dicho objeto para crear un nuevo libro.
+Cabe destacar que el método añadir devolverá un JsonArray que podría estar vacío -si el libro ya existe-, o contener el libro añadido. En realidad esto no es importante. Lo único que nos interesa es tener un parámetro con el que saber si se ha añadido el libro con éxito o no. Así, dentro del cliente, solo tendremos que verificar el tamaño del JsonArray. Otra forma más elegante de manejarlo habría sido con un booleano. Aunque en este caso se ha optado por el JsonArray para reutilizar los métodos que ya teníamos creados en el cliente.
+
+
+
 
 ### Observaciones
-
-- Legibilidad del código: la clase "Cliente" es demasiado extensa y debería dividirse en varios clases (una para gestionar los sockets, otra para procesar la respuesta), de tal forma que cada una tenga una responsabilidad única (SOLID).
 
 - Dentro del código hay varios mensajes por consola para depurar y comprobar que el programa funciona correctamente. En un caso real, estos mensajes deberían ser eliminados o comentados.
 

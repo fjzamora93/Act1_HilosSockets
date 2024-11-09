@@ -18,6 +18,7 @@ public class Cliente {
         String option = "";
 
         try {
+
             ClienteSocket clienteSocket = new ClienteSocket(ipv4, port);
             LibroService libroService = new LibroService(clienteSocket);
 
