@@ -21,18 +21,21 @@ public class LibroDAO {
 
 
 
-    public JsonObject findByIsbn(String isbn){
-        JsonObject jsonBook = new JsonObject();
+    public JsonArray findByIsbn(String isbn){
+        JsonArray jsonBookList = new JsonArray();
 
         for (Libro book: listaLibros){
             if (book.getISBN().equals(isbn)){
+                System.out.println("Encontrado: "+ book.toString());
+                JsonObject jsonBook = new JsonObject();
                 jsonBook.addProperty("ISBN", book.getISBN());
                 jsonBook.addProperty("title", book.getTitle());
                 jsonBook.addProperty("author", book.getAuthor());
                 jsonBook.addProperty("prize", book.getPrize());
+                jsonBookList.add(jsonBook);
             }
         }
-        return jsonBook;
+        return jsonBookList;
     }
 
     public JsonArray findByAuthor(String research){

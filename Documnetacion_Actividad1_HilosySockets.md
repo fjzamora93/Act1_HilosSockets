@@ -11,9 +11,10 @@ Como paso previo comenzamos diseñando la arquitectura del programa a desarrolla
    - Una clase main para ejecutar el programa.
   
 2. Un servidor, donde se ejecutarán las operaciones propias del servidor y la conexión a la base de datos. El servidor necesitará:
-   - Un socket para la comunicación con el cliente.
+   - Un socket para establecer la conexión y aceptar peticiones (y no hará nada más).
    - Un modelo "Libro" -para representar nuestro objeto "Libro".
    - Un modelo DAO, que encapsulará la lógica de todas las operaciones relacionadas con el Libro.
+   - Una clase para poder manejar cada petición entrante de forma individual.
 
 En circunstancias normales existiría un modelo libro para el servidor y otro distinto para el cliente -ya que servidor y cliente van a correr en distintas máquinas-. Pero como se trata de un ejercicio de clase, y para evitar duplicar el código, crearemos un paquete "model" donde la clase libro será compartida.
 
@@ -32,6 +33,8 @@ CLIENTE
 
 SERVIDOR
     |_ Clase main
+    |_ Clients
+    |  |_ HandleClient
     |_ DAO
     |   |_ LibroDao
     |_ Models
@@ -52,14 +55,12 @@ Comenzamos estableciendo la conexión con el servidor. Para ello, necesitamos la
         Scanner scanner = new Scanner(System.in);
 
         try {
-            /**Un InetSocketAddress es solo una combinación de una dirección IP (o nombre de host) y un número de puerto.
-             * No es una conexión en sí misma, sino una dirección que indica a qué IP y puerto se quiere conectar o enlazar. */
             ClienteSocket clienteSocket = new ClienteSocket(ipv4, port);
             LibroService libroService = new LibroService(clienteSocket);
 
 ````
 
-Ciertamente, nuestra clase cliente no va a hacer nada más. Ya que el resto de la lógica quedará encapsulada dentro de nuestras clases "ClienteSocekt" y "LibroService".
+Ciertamente, nuestro método Main del cliente lo único que hará después de establecer la conexión es **"pintar" el menú** y **simular una interfaz gráfica para introducir y pintar datos por consola**. No hará nada más, ya que el resto de la lógica quedará encapsulada dentro de nuestras clases "ClienteSocekt" y "LibroService".
 
 ## Clase ClienteSocket
 
@@ -106,14 +107,22 @@ public class ClienteSocket {
 
 A diferencia del modelo DAO, que se encarga de operaciones relacionadas con la base de datos, un servicio simplemente nos facilita la persistencia de datos y la manera de manejar el formato en el que se va a enviar y recibir la información. Nuestra clase LibroService tendrá los siguientes métodos:
 
-- Un método para buscar un solo libro (toma como parámetros un criterio y un valor de búsqueda).
-- Un método para buscar varios libros (toma como parámetros un criterio y un valor de búsqueda).
-- Un método para procesar la respuesta de búsqueda de un solo libro.
-- Un método para procesar la respueta de varios libros.
-- Un método para añadir un libro.
-- Un método para enviar peticiones de búsqueda.
+- Un método de búsqueda.
+- Un método para añadir.
+- En caso de escalar el programa, necesitaríamos un método para actualizar y otro para borrar.
 
-Mantener estos métodos con este formato permitirá reutilizar o ampliar el código fácilmente en el futuro si, por ejemplo, se decidiesen crear nuevos parámetros de búsqueda.
+Además, harán falta métodos para procesar la petición y la respuesta:
+- Un método para procesar el envío (y que el formato sea adecuado).
+- Un método para recibir la respuesta (parseándolas con el formato adecuado).
+  
+**NOTA**
+Adicionalmente hemos creado una propiedad estática dentro de nuestro LibroService para que podamos acceder al resultado de la búsqueda desde cualquier parte del programa.
+
+````java	
+private static ArrayList<Libro> resultadoBusqueda;
+````
+
+Esto hará que independientemente desde donde nos conectemos dentro de la aplicación, cada vez que usemos el método getResultadoBusqueda() podamos acceder a la última búsqueda realizada y no sea necesario crear una nueva instancia con una nueva petición.
 
 
 ### Envío de peticiones
@@ -138,65 +147,41 @@ A la hora de enviar la información, esta se convertirá en un String de texto p
 
 ### Recepción de respuesta
 
-Inmediatamente, si la conexión es exitosa, el socket debería recibir la respuesta del servidor (que igualmente vendrá en un JSON con un header y body). Para la lectura y el procesamiento de este JSON harán falta distintos métodos, dependiendo del tipo de información que se espera recibir (si es un libro, varios o un booleano). Un ejemplo de recepción quedaría así:
-
-
+Inmediatamente, si la conexión es exitosa, el socket debería recibir la respuesta del servidor (que igualmente vendrá en un JSON con un header y body). Parseamos el contenido y guardamos el resultado de la búsqueda dentro de nuestra propiedad estática.
 
 ````java
-    private Libro procesarRespuestaUnLibro(String respuesta) {
+    private void procesarRespuesta(String respuesta) {
+        ArrayList<Libro> libros = new ArrayList<>();
         JsonObject jsonResponse = JsonParser.parseString(respuesta).getAsJsonObject();
-        JsonObject bodyResponse = jsonResponse.getAsJsonObject("body");
-        JsonObject selectedBook = bodyResponse.getAsJsonObject("content");
-
-        if (selectedBook.size() == 0) {
-            return null;
-        } else {
-            return gson.fromJson(selectedBook, Libro.class);
+        JsonArray selectedBooks = jsonResponse.getAsJsonObject("body").getAsJsonArray("content");
+        for (JsonElement book : selectedBooks) {
+            libros.add(gson.fromJson(book, Libro.class));
         }
+        resultadoBusqueda = libros;
     }
+
 ````
 
-### Método de unión
+### Resultados en ArrayList
 
-Como punto de unión entre el envío y la recepción de la respuesta, hay distintos métodos que se encargan de "clasificar" cómo se va a producir. Estos métodos, a su vez, tendrán nombres estandarizados para que sean fácilmente reconocibles desde el cliente:
-
-
-````java
-    public Libro findOne(String criterio, String value) throws IOException {
-        String respuesta = sendRequest(criterio, value);
-        return procesarRespuestaUnLibro(respuesta);
-    }
-
-    public ArrayList<Libro> findMany(String criterio, String value) throws IOException {
-        String respuesta = sendRequest(criterio, value);
-        return procesarRespuestaVariosLibros(respuesta);
-    }
-````
-
-### Clase main del cliente
-
-La clase main del cliente únicamente se encargará de simular una interfaz gráfica para redirigir las consultas y, como mucho, guardar en variables las respuestas del servidor para que puedan ser utilizadas posteriormente  para cualquier propósito. Para ello, solo hemos usado un menú, mensajes por consola y un switch-case.
-
-
+Aunque no es una solución óptima, se ha decidido guardar todos los resultados dentro de un ArrayList y, a partir de ahí, manejar la información. En un caso real, no lo guardaríamos dentro de un ArrayList. Posiblemente querríamos guardar las peticiones que recuperan un solo objeto dentro de una clase o directamente en el JSON.  Para las operaciones de Create, Update y Delete, posiblemente devolveríamos un booleano. Aunque de momento lo dejaremos así.
 
 
 
 
 # Desarrollo del Servidor
 
-La arquitectura del servidor, al ser menos compleja (para este ejercicio) la vamos a reducir a la clase principal (Servidor) y al modelo DAO (LibroDAO).
-Si el servidor siguiese creciendo, sería necesario incorporar una clase para mejorar la lógica de los sockets y la conexión, y otra clase para gestionar las respuestas.
-
 Pero por el momento, esto es lo que encontraremos dentro del servidor:
 
 1. Un método main con un socket para establecer la conexión con un bucle while que establecerá una conexión con cada cliente que se conecte.
-2. Un método para gestionar cada petición entrante, y que contará con un bucle para seguir recibiendo peticiones hasta cerrar la conexión.
-3. Un método para procesar la petición y enviar la respuesta al cliente.
+2. Una Clase para gestionar cada petición entrante (a la que hemos llamado HandleClient).
+3. Un modelo DAO para facilitar el acceso a datos y la manipulación de los mismos.
 
 Al final, el método main del servidor quedaría así:
 
 ````java
-public static void main(String[] args) {
+public class Servidor {
+    public static void main(String[] args) {
 
         String ipv4 = "localhost";
         System.out.println("APLICACIÓN DE SERVIDOR");
@@ -213,59 +198,107 @@ public static void main(String[] args) {
                 Socket enchufeAlCliente = servidor.accept();
                 System.out.println("Comunicación entrante");
 
-                // Creamos un nuevo hilo para manejar al cliente
-                new Thread(() -> manejarCliente(enchufeAlCliente)).start();
+                // Creamos un nuevo hilo para manejar a cada cliente entrante
+                new ClientHandler(enchufeAlCliente);
             }
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            System.out.println("Error al leer o escribir datos, posiblemente por una desconexión del cliente: " + e.getMessage());
 
+        } catch (RuntimeException e){
+            System.out.println("El cliente se ha desconectado del servidor");
+        }
+    }
+
+}
+````
+
+## Clase HandleClient
+
+Cada nueva petición entrante creará un nuevo hilo a partir de la clase HandleClient. Y dentro de esta clase, es donde se gestionarán todas las peticiones entrantes y las respuestas del servidor a ese cliente en concreto.
+
+````java
+public class ClientHandler implements Runnable {
+    private Thread hilo;
+    // Resto de propiedades
+
+    public ClientHandler(Socket clientConnection) {
+        // resto de propieaddes en el constructor
+        this.hilo = new Thread(this, "Usuario-" + contador++);
+        this.hilo.start();
+    }
+
+
+    @Override
+    public void run() {
+        try {
+            obtenerFlujoDatos();
+            while ((mensaje = reader.readLine()) != null) {
+                JsonElement result = handleRequest();
+                if (!clientConnection.isClosed()) {
+                    sendResponse("Código 200: Ok", result);
+                } else {
+                    System.out.println("El socket está cerrado. Terminando la conexión.");
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error al recibir o enviar datos: " + e.getMessage());
+        } catch (NullPointerException e) {
+            System.out.println("El mensaje recibido es nulo: " + e.getMessage());
+        } catch (RuntimeException e) {
+            System.out.println("Error en la ejecución del servidor: " + e.getMessage());
+        } finally {
+            try {
+                if (clientConnection != null && !clientConnection.isClosed()) {
+                    clientConnection.close();
+                    System.out.println("Conexión cerrada correctamente.");
+                }
+            } catch (IOException e) {
+                System.err.println("Error al cerrar el socket: " + e.getMessage());
+            }
+        }
+    }
+
+````
+
+### Procesamiento de peticiones
+
+Para gestionar las peticiones, contaremos con los siguietnes métodos:
+1. Un método para abrir el flujo de datos.
+2. Un método para procesar la petición.
+3. Un método para enviar la respuesta.
+4. Un método para cerrar la conexión.
+
+
+Para el envío de la petición, se ha creado un método que tomará como parámetros el outputStream, el header y el contenido del body. No es imprescindible como tal, pero el método retornará la respuesta (por si fuese necesario utilizarla en un futuro para algo).
+
+Al estructurar el código de esta manera, en caso de que queramos cambiar la forma de procesar las peticiones entrantes, o queramos cambiar la manera de enviar respuestas, simplemente tendremos que ir al método afectado y adaptarlo a las nuevas necesidades del programa.
+
+
+````java
+private synchronized JsonObject sendResponse(String headerContent, JsonElement bodyContent) throws IOException {
+        try {
+            JsonObject jsonResponse = new JsonObject();
+            JsonObject responseHeader = new JsonObject();
+            JsonObject responseBody = new JsonObject();
+            jsonResponse.add("header", responseHeader);
+            jsonResponse.add("body", responseBody);
+
+            responseHeader.addProperty("header", headerContent);
+            responseBody.add("content", bodyContent);
+
+            System.out.println("SALIDA DEL SERVIDOR: " + jsonResponse);
+            salida.write((jsonResponse.toString() + "\n").getBytes());
+
+            return jsonResponse;
+
+        } catch (IOException e) {
+            throw(e);
         }
     }
 ````
 
-Cada nueva petición entrante creará un nuevo hilo. Dentro de ese hilo, se cursarán las peticiones de forma individual:
-
-````java
-public static void manejarCliente(Socket enchufeAlCliente){
-        LibroDAO biblioteca = new LibroDAO();
-        try {
-            //ENTRADA
-            InputStream entrada = enchufeAlCliente.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(entrada));
-            String mensaje;
-            //SALIDA
-            OutputStream salida = enchufeAlCliente.getOutputStream();
-
-            while ((mensaje = reader.readLine()) != null) {
-
-                // Objeto para RECIBIR petición
-                JsonObject jsonRequest = JsonParser.parseString(mensaje).getAsJsonObject();
-                String requestHeader = jsonRequest.get("header").getAsString();
-                String requestBody;
-                JsonElement jsonResult;
-
-                switch (requestHeader) {
-                // AQUÍ CLASIFICAMOS LA PETICIÓN
-````
-
-Para el envío de la petición, se ha creado un método que tomará como parámetros el outputStream, el header y el contenido del body. No es imprescindible como tal, pero el método retornará la respuesta (por si fuese necesario utilizarla en un futuro para algo).
-
-
-````java
- private static JsonObject sendResponse(String headerContent, JsonElement bodyContent, OutputStream salida ) throws IOException {
-        JsonObject jsonResponse = new JsonObject();
-        JsonObject responseHeader = new JsonObject();
-        JsonObject responseBody = new JsonObject();
-        jsonResponse.add("header", responseHeader);
-        jsonResponse.add("body", responseBody);
-        responseHeader.addProperty("header", headerContent);
-        responseBody.add("content", bodyContent);
-        System.out.println("SALIDA DEL SERVIDOR: " + jsonResponse);
-        salida.write((jsonResponse.toString() + "\n").getBytes() );
-        return jsonResponse;
-    }
-    
-````
+Por ejemplo, aquí estamos manejando el envío de respuestas. Si el día de mañana fuera necesario añadir un certificado de seguridad al Header, o un Status, o cualquier otro tipo de información, simplemente tendríamos que añadirlo en el método sendResponse. Esta misma lógica se ha aplicado a la recepción de peticiones.
 
 
 ### Modelos DAO (synchronus) y Libro
@@ -310,7 +343,6 @@ Como detalle importante, la operación "añadir" debe quedar bloqueada en caso d
 ````
 
 Cabe destacar que el método añadir devolverá un JsonArray que podría estar vacío -si el libro ya existe-, o contener el libro añadido. En realidad esto no es importante. Lo único que nos interesa es tener un parámetro con el que saber si se ha añadido el libro con éxito o no. Así, dentro del cliente, solo tendremos que verificar el tamaño del JsonArray. Otra forma más elegante de manejarlo habría sido con un booleano. Aunque en este caso se ha optado por el JsonArray para reutilizar los métodos que ya teníamos creados en el cliente.
-
 
 
 

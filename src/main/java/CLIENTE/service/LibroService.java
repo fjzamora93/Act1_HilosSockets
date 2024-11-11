@@ -5,35 +5,27 @@ import com.google.gson.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 
 public class LibroService {
     private final ClienteSocket clienteSocket;
     private final Gson gson = new Gson();
+    private static ArrayList<Libro> resultadoBusqueda;
 
     public LibroService(ClienteSocket clienteSocket) {
         this.clienteSocket = clienteSocket;
     }
 
-    public String sendRequest(String criterio, String value) throws IOException {
-        JsonObject jsonRequest = new JsonObject();
-        jsonRequest.addProperty("header", "getBy" + criterio);
-        jsonRequest.addProperty("body", value);
-        clienteSocket.sendMessage(jsonRequest.toString());
-        return clienteSocket.receiveMessage();
-    }
 
-    public Libro findOne(String criterio, String value) throws IOException {
+    // MÉTODO PARA BUSCAR LIBROS
+    public ArrayList<Libro> find(String criterio, String value) throws IOException {
         String respuesta = sendRequest(criterio, value);
-        return procesarRespuestaUnLibro(respuesta);
+        procesarRespuesta(respuesta);
+        return resultadoBusqueda;
     }
 
-    public ArrayList<Libro> findMany(String criterio, String value) throws IOException {
-        String respuesta = sendRequest(criterio, value);
-        return procesarRespuestaVariosLibros(respuesta);
-    }
 
+    // MÉTODO PARA AÑADIR LIBRO
     public boolean add(Libro libro) throws IOException {
         JsonObject jsonRequest = new JsonObject();
         JsonObject newBook = gson.toJsonTree(libro).getAsJsonObject();
@@ -42,39 +34,38 @@ public class LibroService {
 
         clienteSocket.sendMessage(jsonRequest.toString());
         String respuesta = clienteSocket.receiveMessage();
-        ArrayList<Libro> listadoResultados = procesarRespuestaVariosLibros(respuesta);
+        procesarRespuesta(respuesta);
 
-        if (listadoResultados.isEmpty()){
+        if (resultadoBusqueda.isEmpty()){
             return false;
         } else {
             return true;
         }
     }
 
-    private Libro procesarRespuestaUnLibro(String respuesta) {
-        JsonObject jsonResponse = JsonParser.parseString(respuesta).getAsJsonObject();
-        JsonObject bodyResponse = jsonResponse.getAsJsonObject("body");
-        JsonObject selectedBook = bodyResponse.getAsJsonObject("content");
-
-        if (selectedBook.size() == 0) {
-            return null;
-        } else {
-            return gson.fromJson(selectedBook, Libro.class);
-        }
+    // ENVÍO DE PETICIÓN
+    public String sendRequest(String criterio, String value) throws IOException {
+        JsonObject jsonRequest = new JsonObject();
+        jsonRequest.addProperty("header", "getBy" + criterio);
+        jsonRequest.addProperty("body", value);
+        clienteSocket.sendMessage(jsonRequest.toString());
+        return clienteSocket.receiveMessage();
     }
 
-    private ArrayList<Libro> procesarRespuestaVariosLibros(String respuesta) {
+
+    // MÉTODO PARA PROCESAR LA RESPUESTA ENTRANTE DEL SERVIDOR
+    private void procesarRespuesta(String respuesta) {
         ArrayList<Libro> libros = new ArrayList<>();
         JsonObject jsonResponse = JsonParser.parseString(respuesta).getAsJsonObject();
         JsonArray selectedBooks = jsonResponse.getAsJsonObject("body").getAsJsonArray("content");
-
         for (JsonElement book : selectedBooks) {
             libros.add(gson.fromJson(book, Libro.class));
         }
+        resultadoBusqueda = libros;
+    }
 
-        if (libros.isEmpty()){
-            return null;
-        }
-        return libros;
+    // MÉTODO ESTÁTICO PARA DEVOLVER EL RESULTADO DESDE CUALQUIER PARTE DE LA APLICACIÓN
+    public static ArrayList<Libro> getResultadoBusqueda() {
+        return resultadoBusqueda;
     }
 }

@@ -18,12 +18,10 @@ public class Cliente {
         String option = "";
 
         try {
-
             ClienteSocket clienteSocket = new ClienteSocket(ipv4, port);
             LibroService libroService = new LibroService(clienteSocket);
 
             while (!option.trim().equals("5")) {
-
                 // MENÚ
                 System.out.println("Menú de opciones:");
                 System.out.println("1. Consultar libro por ISBN");
@@ -36,26 +34,22 @@ public class Cliente {
                 // LECTURA DE LA OPCIÓN INTRODUCIDA
                 option = scanner.nextLine();
                 JsonObject jsonRequest = new JsonObject();
-                Libro libro;
-                ArrayList <Libro> libros;
+
                 switch (option) {
                     case "1":
                         System.out.println("Introduce el ISBN");
-                        String isbn = scanner.nextLine();
-                        libro = libroService.findOne("ISBN", isbn);
-                        consoleLog(libro);
+                        libroService.find("ISBN", scanner.nextLine());
+                        consoleLog(LibroService.getResultadoBusqueda());
                         break;
                     case "2":
                         System.out.println("Introduce el título");
-                        String title = scanner.nextLine();
-                        libros = libroService.findMany("Title", title);
-                        consoleLog(libros);
+                        libroService.find("Title", scanner.nextLine());
+                        consoleLog(LibroService.getResultadoBusqueda());
                         break;
                     case "3":
                         System.out.println("Introduce el autor");
-                        String autor = scanner.nextLine();
-                        libros = libroService.findMany("Author", autor);
-                        consoleLog(libros);
+                        libroService.find("Author", scanner.nextLine());
+                        consoleLog(LibroService.getResultadoBusqueda());
                         break;
                     case "4":
                         Libro newBook = recopilarDatosNewBook(scanner);
@@ -69,6 +63,7 @@ public class Cliente {
                         System.out.println("Hasta pronto, gracias por establecer conexión");
                         jsonRequest.addProperty("header", "exit");
                         jsonRequest.addProperty("body", "exit");
+                        clienteSocket.sendMessage(jsonRequest.toString());
                         clienteSocket.close();
                         break;
                     default:
@@ -101,12 +96,19 @@ public class Cliente {
         return new Libro(isbn, title, author, prize);
     }
 
-    //Creamos un método para pintar por consola
+
+    //Creamos un método para pintar por consola... no tiene mucha utilidad
     private static void consoleLog(Object object) throws InterruptedException {
-        if (object != null ) {
-            System.out.println("Encontrado: \n" + object.toString());
+        if (object instanceof ArrayList) {
+            ArrayList<?> arrayList = (ArrayList<?>) object;
+            if (arrayList.isEmpty()) {
+                System.out.println("No hay coincidencias de búsqueda");
+            } else {
+                System.out.println("Encontrado: \n" + object.toString());
+            }
+
         } else {
-            System.out.println("No hay coincidencias de búsqueda");
+            System.out.println(object.toString());
         }
         Thread.sleep(2000);
     }
