@@ -1,0 +1,15 @@
+ El volumen de la unidad C es OS
+ El n£mero de serie del volumen es: A81E-A709
+
+ Directorio de C:\Users\Administrador.CRISASUSESTUDIO\Desktop\DAM-2-Ejercicios\Procesos\ActividadUF1-1
+
+04/10/2024  09:24    <DIR>          .
+04/10/2024  09:24    <DIR>          ..
+04/10/2024  08:34               490 .gitignore
+04/10/2024  09:23    <DIR>          .idea
+04/10/2024  08:34               653 pom.xml
+04/10/2024  09:24                 0 salida.txt
+04/10/2024  08:34    <DIR>          src
+04/10/2024  09:24    <DIR>          target
+               3 archivos          1.143 bytes
+               5 dirs  114.498.433.024 bytes libres

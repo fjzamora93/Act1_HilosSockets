@@ -1,0 +1,42 @@
+Nuevo examinado: Pepe
+Nuevo examinado: Juan
+Nuevo examinado: Luis
+No hay exámenes que consumir
+No hay exámenes que consumir
+No hay exámenes que consumir
+E1 Se ha generado examen con código = E1-2024
+E1-2024 - Pepe Pregunta: 1E
+E1-2024 - Pepe Pregunta: 2C
+E1-2024 - Juan Pregunta: 1D
+E1-2024 - Juan Pregunta: 2D
+E1-2024 - Juan Pregunta: 3C
+E1-2024 - Juan Pregunta: 4C
+E1-2024 - Juan Pregunta: 5C
+E1-2024 - Juan Pregunta: 6C
+E1 Se ha generado examen con código = E1-2024
+E1-2024 - Juan Pregunta: 7C
+E1-2024 - Juan Pregunta: 8B
+E1-2024 - Juan Pregunta: 9A
+E1-2024 - Juan Pregunta: 10E
+E1-2024 - Juan- Examen terminado.
+E1-2024 - Pepe Pregunta: 3B
+E1-2024 - Luis Pregunta: 1C
+E1 Se ha generado examen con código = E1-2024
+E1-2024 - Luis Pregunta: 2B
+E1-2024 - Pepe Pregunta: 4C
+E1-2024 - Luis Pregunta: 3D
+E1-2024 - Pepe Pregunta: 5C
+E1-2024 - Luis Pregunta: 4E
+E1-2024 - Luis Pregunta: 5E
+E1-2024 - Luis Pregunta: 6A
+E1-2024 - Luis Pregunta: 7E
+E1-2024 - Luis Pregunta: 8A
+E1-2024 - Luis Pregunta: 9C
+E1-2024 - Luis Pregunta: 10E
+E1-2024 - Luis- Examen terminado.
+E1-2024 - Pepe Pregunta: 6C
+E1-2024 - Pepe Pregunta: 7D
+E1-2024 - Pepe Pregunta: 8B
+E1-2024 - Pepe Pregunta: 9E
+E1-2024 - Pepe Pregunta: 10A
+E1-2024 - Pepe- Examen terminado.

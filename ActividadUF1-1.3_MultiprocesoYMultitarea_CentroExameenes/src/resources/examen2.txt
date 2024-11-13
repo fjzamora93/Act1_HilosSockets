@@ -1,0 +1,42 @@
+Nuevo examinado: Rosa
+Nuevo examinado: Miguel
+Nuevo examinado: Pedro
+No hay exámenes que consumir
+No hay exámenes que consumir
+No hay exámenes que consumir
+E1 Se ha generado examen con código = E1-2024
+E1-2024 - Rosa Pregunta: 1A
+E1 Se ha generado examen con código = E1-2024
+E1 Se ha generado examen con código = E1-2024
+E1-2024 - Miguel Pregunta: 1E
+E1-2024 - Miguel Pregunta: 2E
+E1-2024 - Miguel Pregunta: 3B
+E1-2024 - Miguel Pregunta: 4E
+E1-2024 - Miguel Pregunta: 5E
+E1-2024 - Rosa Pregunta: 2E
+E1-2024 - Rosa Pregunta: 3A
+E1-2024 - Rosa Pregunta: 4A
+E1-2024 - Rosa Pregunta: 5A
+E1-2024 - Miguel Pregunta: 6A
+E1-2024 - Miguel Pregunta: 7E
+E1-2024 - Miguel Pregunta: 8C
+E1-2024 - Pedro Pregunta: 1E
+E1-2024 - Pedro Pregunta: 2B
+E1-2024 - Pedro Pregunta: 3A
+E1-2024 - Pedro Pregunta: 4E
+E1-2024 - Miguel Pregunta: 9D
+E1-2024 - Miguel Pregunta: 10A
+E1-2024 - Miguel- Examen terminado.
+E1-2024 - Rosa Pregunta: 6B
+E1-2024 - Rosa Pregunta: 7B
+E1-2024 - Rosa Pregunta: 8C
+E1-2024 - Rosa Pregunta: 9B
+E1-2024 - Rosa Pregunta: 10E
+E1-2024 - Rosa- Examen terminado.
+E1-2024 - Pedro Pregunta: 5C
+E1-2024 - Pedro Pregunta: 6A
+E1-2024 - Pedro Pregunta: 7B
+E1-2024 - Pedro Pregunta: 8C
+E1-2024 - Pedro Pregunta: 9D
+E1-2024 - Pedro Pregunta: 10D
+E1-2024 - Pedro- Examen terminado.
