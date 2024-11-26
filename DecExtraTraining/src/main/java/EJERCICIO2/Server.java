@@ -20,26 +20,42 @@ import java.net.Socket;
  */
 
 
-public class Server {
-    String info1 = "Primer tipo de información";
-    String info2 = "Segundo tipo de información";
+public class Server implements Runnable{
+    private int port;
+    private final String ipv4 = "localhost";
 
-    String mensaje;
+    private Thread thread;
 
-    static OutputStream salida;
-    static InputStream entrada;
-    static BufferedReader reader;
-    static Socket clientConnection;
+    private String response1;
+    private String response2;
 
-    public static void main(String[] args) {
+    private String request;
 
-        String ipv4 = "localhost";
+    private OutputStream salida;
+    private InputStream entrada;
+    private BufferedReader reader;
+    private Socket clientConnection;
+
+
+    public Server(String param1, String param2, int port){
+        this.port = port;
+        this.response1 = param1;
+        this.response2 = param2;
+        this.thread = new Thread(this, "Servidor");
+        thread.start();
+    }
+
+
+    @Override
+    public void run() {
+
+
         System.out.println("APLICACIÓN DE SERVIDOR");
         System.out.println("----------------------------------");
 
         try {
             ServerSocket servidor = new ServerSocket();
-            InetSocketAddress direccion = new InetSocketAddress(ipv4, 2000);
+            InetSocketAddress direccion = new InetSocketAddress(this.ipv4 , this.port);
             servidor.bind(direccion);
             System.out.println("Servidor creado y escuchando .... ");
             System.out.println("Dirección IP: " + direccion.getAddress());
@@ -47,33 +63,39 @@ public class Server {
             while (true) {
                 clientConnection = servidor.accept();
                 obtenerFlujoDatos();
-                System.out.println("Comunicación entrante");
+                System.out.println("\nComunicación entrante");
 
-                // AQUÍ ES DONDE SE DEBERÍA CREAR CADA HILO EN CASO DE HABERLO
-                while ((mensaje = reader.readLine()) != null) {
-                    JsonElement result = procesarPeticion();
-                    if (!clientConnection.isClosed()) {
-                        sendResponse("Código 200: Ok", result);
-                    } else {
-                        System.out.println("El socket está cerrado. Terminando la conexión.");
-                        break;
+                while ((request = reader.readLine()) != null) {
+                    System.out.println("Petición recibida: " + request);
+                    switch(request){
+                        case "1":
+                            salida.write((response1 + "\n").getBytes());
+                            break;
+                        case "2":
+                            salida.write((response2 + "\n").getBytes());
+                            break;
+                        default:
+                            salida.write(("no se encuentra disponible esa opción en el menú\n").getBytes());
+                            clientConnection.close();
+                            break;
                     }
                 }
 
-
             }
+            
         } catch (IOException e) {
-            System.out.println("Error al leer o escribir datos, posiblemente por una desconexión del cliente: " + e.getMessage());
+            System.out.println( e.getMessage());
 
         } catch (RuntimeException e){
             System.out.println("El cliente se ha desconectado del servidor");
         }
     }
 
-    public static void obtenerFlujoDatos() throws IOException {
+    public  void obtenerFlujoDatos() throws IOException {
         salida = clientConnection.getOutputStream();
         entrada = clientConnection.getInputStream();
         reader = new BufferedReader(new InputStreamReader(entrada));
     }
+
 
 }

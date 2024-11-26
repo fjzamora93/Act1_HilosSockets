@@ -19,20 +19,28 @@ import java.util.Scanner;
  * */
 
 
-public class Client {
+public class Client implements Runnable {
+    private final String ipv4 = "localhost";
+    private int port;
+    private Thread thread;
+    private Socket socket;
+    private BufferedReader reader;
+    private Writer writer;
 
-    public static Socket socket;
-    public static BufferedReader reader;
-    public static Writer writer;
-    public static <JsonObject> void main(String[] args) throws InterruptedException {
+    public Client(int port){
+        this.port = port;
+        this.thread = new Thread(this, "Cliente");
+        thread.start();
+    }
 
+    @Override
+    public void run() {
 
-        String ipv4 = "localhost";
-        int port = 2000;
+        int port = this.port;
         System.out.println("APLICACIÓN CLIENTE");
         System.out.println("-----------------------------------");
         Scanner scanner = new Scanner(System.in);
-        String option = "";
+        String option;
 
 
         try {
@@ -40,7 +48,7 @@ public class Client {
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
 
-            while (!option.trim().equals("exit")) {
+            do {
                 // MENÚ
                 System.out.println("Menú de opciones:");
                 System.out.println("1. Consultar Primera");
@@ -65,7 +73,10 @@ public class Client {
 //                }
 
 
-            }
+            } while (option.trim().equals("1") ||
+                    option.trim().equals("2"));
+
+            sendMessage("exit");
             closeConnection();
 
         } catch (UnknownHostException e) {
@@ -77,18 +88,18 @@ public class Client {
         }
     }
 
-    public static void sendMessage(String message) throws IOException {
+    public void sendMessage(String message) throws IOException {
         writer.write(message + "\n");
         writer.flush();
     }
 
-    public static String receiveMessage() throws IOException {
+    public String receiveMessage() throws IOException {
         String response = reader.readLine();
         System.out.println("La respuesta a la información requerida es: " + response);
         return response;
     }
 
-    public static void closeConnection() throws IOException {
+    public void closeConnection() throws IOException {
         reader.close();
         writer.close();
         socket.close();
