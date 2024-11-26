@@ -21,7 +21,13 @@ public class Lanzador {
 
         try {
             for (int i = 0; i<numeros.length; i++){
-                // ProcessBuilder se inicializa para ejecutar un proceso
+                /* ARGUMENTOS DEL PROCESS BIULDER:
+                1- Java es lo que va alanzar la máquina virtual de java.
+                2- -cp es una mierda que dice que el tercer argumento es una ruta.
+                3- después van la ruta
+                4- El nombre del programa
+                5 - los arugmentos ques e le van a pasar
+                 */
                 ProcessBuilder pb = new ProcessBuilder("java", "-cp", classpath, "Triangulo", numeros[i]);
 
                 //El output irá a la carpeta de "resource"
@@ -34,6 +40,12 @@ public class Lanzador {
                 System.out.println("Lanzando proceso nº " + i);
             }
 
+
+            /**
+             * Si no se llama al waitFor(), el programa Lanzador va a seguir
+             * ejecutándose linea a línea, no va a esperar a que termine la ejecución
+             * del proceso
+             * */
             for (Process proceso: procesos){
                 proceso.waitFor();
                 System.out.println("Proceso terminado");

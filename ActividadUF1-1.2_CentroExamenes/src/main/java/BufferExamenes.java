@@ -37,6 +37,7 @@ public class BufferExamenes {
         if (!colaExamenes.isEmpty()){
             return colaExamenes.remove();
         } else {
+            System.out.println("Superado tiempo máximo de espera: El alumno se marchó sin realizar exámenes por que no había exámenes que consumir");
             return null;
         }
     }

@@ -20,7 +20,7 @@ public class BufferExamenes {
     }
 
     //MÉTODO PARA SACAR
-    public synchronized String consumirExamen(){
+    public  String consumirExamen(){
         // Forzamos un tiempo de espera para que no se adelante
         int espera = 0;
         while (colaExamenes.isEmpty() && espera < 20){

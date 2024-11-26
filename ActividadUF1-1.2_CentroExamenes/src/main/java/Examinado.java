@@ -21,7 +21,7 @@ public class Examinado implements Runnable {
     }
 
     @Override
-    public synchronized void run() {
+    public void run() {
         String codigoExamen = this.buffer.consumirExamen();
         if (codigoExamen != null) {
             int contadorExamen = 1;
